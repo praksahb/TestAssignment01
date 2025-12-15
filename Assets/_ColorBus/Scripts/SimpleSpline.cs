@@ -1,104 +1,69 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SimpleSpline : MonoBehaviour
 {
-    public enum InterpolationMode { Linear, CatmullRom }
+    // Use Transforms for easier editing in the Scene
+    public List<Transform> waypoints = new List<Transform>();
+    public bool loop = true;
 
-    public InterpolationMode interpolation = InterpolationMode.Linear;
-    public bool loop = false;
-    public Color pathColor = Color.yellow;
-
-    [Header("Editor Tools")]
-    public float gridSize = 1f;
-
-    public int PointCount => transform.childCount;
-
-    [ContextMenu("Snap Waypoints to Grid")]
-    public void SnapWaypoints()
+    // Helper: Context Menu to Auto-Fill from Children
+    [ContextMenu("Auto-Fill from Children")]
+    public void FillFromChildren()
     {
+        waypoints.Clear();
         foreach (Transform child in transform)
         {
-            Vector3 p = child.position;
-            p.x = Mathf.Round(p.x / gridSize) * gridSize;
-            p.y = Mathf.Round(p.y / gridSize) * gridSize;
-            p.z = Mathf.Round(p.z / gridSize) * gridSize;
-            child.position = p;
+            waypoints.Add(child);
         }
     }
 
-    public Vector3 GetPoint(float t)
+    private void OnDrawGizmos()
     {
-        int count = PointCount;
-        if (count < 2) return transform.position;
+        if (waypoints == null || waypoints.Count < 2) return;
 
-        t = Mathf.Clamp01(t);
-
-        int segmentCount = loop ? count : count - 1;
-        float scaledT = t * segmentCount;
-        int segIndex = Mathf.FloorToInt(scaledT);
-        float localT = scaledT - segIndex;
-
-        if (segIndex >= segmentCount)
+        Gizmos.color = Color.cyan;
+        for (int i = 0; i < waypoints.Count - 1; i++)
         {
-            segIndex = segmentCount - 1;
-            localT = 1f;
+            if(waypoints[i] != null && waypoints[i+1] != null)
+                Gizmos.DrawLine(waypoints[i].position, waypoints[i+1].position);
         }
-
-        int i0 = GetIndex(segIndex - 1);
-        int i1 = GetIndex(segIndex);
-        int i2 = GetIndex(segIndex + 1);
-        int i3 = GetIndex(segIndex + 2);
-
-        Vector3 p0 = transform.GetChild(i0).position;
-        Vector3 p1 = transform.GetChild(i1).position;
-        Vector3 p2 = transform.GetChild(i2).position;
-        Vector3 p3 = transform.GetChild(i3).position;
-
-        if (interpolation == InterpolationMode.Linear)
-            return Vector3.Lerp(p1, p2, localT);
-
-        return CatmullRom(localT, p0, p1, p2, p3);
-    }
-
-    int GetIndex(int i)
-    {
-        int count = PointCount;
-        if (loop)
-            return (i + count) % count;
-
-        return Mathf.Clamp(i, 0, count - 1);
-    }
-
-    Vector3 CatmullRom(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
-    {
-        float t2 = t * t;
-        float t3 = t2 * t;
-
-        return 0.5f * (
-            (2f * p1) +
-            (-p0 + p2) * t +
-            (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
-            (-p0 + 3f * p1 - 3f * p2 + p3) * t3
-        );
-    }
-
-    void OnDrawGizmos()
-    {
-        if (PointCount < 2) return;
-
-        Gizmos.color = pathColor;
-        const int steps = 64;
-
-        Vector3 prev = GetPoint(0f);
-        for (int i = 1; i <= steps; i++)
+        if (loop && waypoints.Count > 1)
         {
-            float t = i / (float)steps;
-            Vector3 p = GetPoint(t);
-            Gizmos.DrawLine(prev, p);
-            prev = p;
+            if(waypoints[waypoints.Count - 1] != null && waypoints[0] != null)
+                Gizmos.DrawLine(waypoints[waypoints.Count - 1].position, waypoints[0].position);
         }
+        
+        // Draw Points
+        Gizmos.color = Color.blue;
+        foreach(var p in waypoints)
+        {
+            if(p != null) Gizmos.DrawWireSphere(p.position, 0.3f);
+        }
+    }
 
-        foreach (Transform child in transform)
-            Gizmos.DrawSphere(child.position, 0.15f);
+    public Vector3 GetPointOnPath(float t)
+    {
+        if (waypoints == null || waypoints.Count == 0) return transform.position;
+
+        int count = waypoints.Count;
+        int numSegments = loop ? count : count - 1;
+        
+        float segmentT = t * numSegments;
+        int currentPointIndex = Mathf.FloorToInt(segmentT);
+        float localT = segmentT - currentPointIndex;
+
+        currentPointIndex = currentPointIndex % count;
+        int nextPointIndex = (currentPointIndex + 1) % count;
+
+        if (!loop && currentPointIndex >= count - 1)
+        {
+            return waypoints[count - 1].position;
+        }
+        
+        Vector3 p0 = waypoints[currentPointIndex].position;
+        Vector3 p1 = waypoints[nextPointIndex].position;
+
+        return Vector3.Lerp(p0, p1, localT);
     }
 }

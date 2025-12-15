@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public enum CharacterColor
 {
@@ -11,9 +13,13 @@ public enum CharacterColor
 public class Character : MonoBehaviour
 {
     public CharacterColor color;
-    public Renderer visualRenderer;
+    public float speed = 5.0f;
+    private Renderer myRenderer;
 
-    private static MaterialPropertyBlock _propBlock;
+    private void Awake()
+    {
+        myRenderer = GetComponentInChildren<Renderer>();
+    }
 
     private void OnEnable()
     {
@@ -25,42 +31,50 @@ public class Character : MonoBehaviour
         SetColor(color);
     }
 
-    public void SetColor(CharacterColor newColor)
+    public void SetColor(CharacterColor c)
     {
-        color = newColor;
-        if (visualRenderer != null)
+        this.color = c;
+        // visual update
+        if (myRenderer != null)
         {
-            Color c = Color.white;
-            switch (color)
-            {
-                case CharacterColor.Red:
-                    c = Color.red;
-                    break;
-                case CharacterColor.Green:
-                    c = Color.green;
-                    break;
-                case CharacterColor.Blue:
-                    c = Color.blue;
-                    break;
-                case CharacterColor.Yellow:
-                    c = Color.yellow;
-                    break;
-            }
-            
-            // Handle SpriteRenderer directly (simpler, no material leak usually as it uses vertex color)
-            if (visualRenderer is SpriteRenderer sr)
-            {
-                sr.color = c;
-            }
-            else
-            {
-                // For MeshRenderer, use PropertyBlock to avoid creating Material instances in Editor
-                if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
-                
-                visualRenderer.GetPropertyBlock(_propBlock);
-                _propBlock.SetColor("_Color", c); // Standard shader property
-                visualRenderer.SetPropertyBlock(_propBlock);
-            }
+            // Assuming the shader has a standard Color property (BaseColor or _Color)
+            // For standard material:
+            myRenderer.material.color = GetColorFromEnum(c);
         }
+    }
+    
+    private Color GetColorFromEnum(CharacterColor c)
+    {
+        switch (c)
+        {
+            case CharacterColor.Red: return Color.red;
+            case CharacterColor.Green: return Color.green;
+            case CharacterColor.Blue: return Color.blue;
+            case CharacterColor.Yellow: return Color.yellow;
+        }
+        return Color.white;
+    }
+
+    public void MoveToBus(Transform targetSeat, Bus bus)
+    {
+        StartCoroutine(MoveToBusRoutine(targetSeat, bus));
+    }
+    
+    private IEnumerator MoveToBusRoutine(Transform targetSeat, Bus bus)
+    {
+        // 1. Move to Entry point (optional, but good for visuals)
+        // 2. Move to Seat
+        
+        while (Vector3.Distance(transform.position, targetSeat.position) > 0.1f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, targetSeat.position, speed * Time.deltaTime);
+            yield return null;
+        }
+        
+        transform.position = targetSeat.position;
+        transform.SetParent(targetSeat);
+        
+        // Notify Bus we arrived? Or Bus handles it? 
+        // Bus handles visual counting usually.
     }
 }

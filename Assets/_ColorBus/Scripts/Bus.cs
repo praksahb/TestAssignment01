@@ -5,10 +5,15 @@ using UnityEngine.EventSystems;
 
 public class Bus : MonoBehaviour, IPointerDownHandler
 {
+    [Header("Bus Stats")]
     public CharacterColor color;
     public int capacity = 5;
-    public List<Character> passengers = new List<Character>();
     public float speed = 5f;
+    public List<Character> passengers = new List<Character>();
+    public Transform[] seatPositions; // Restored
+    
+    [Header("Visuals")]
+    public Renderer busRenderer; // Inspector Reference
     
     [Header("Path Settings")]
     public SimpleSpline currentPath;
@@ -20,6 +25,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler
     private bool tapToStart = false;
     private float currentT = 0f;
     private bool isExiting = false;
+    private bool isLoadingPassengers = false;
 
     public System.Action<Bus> OnBusDeparted;
     public System.Action<Bus> OnLeaveQueue; // New event for when bus leaves the waiting spot
@@ -64,7 +70,12 @@ public class Bus : MonoBehaviour, IPointerDownHandler
         isInQueue = true;
         
         // Visual Tint
-        GetComponent<SpriteRenderer>().color = GetColorValue(busColor);
+        if (busRenderer == null) busRenderer = GetComponentInChildren<Renderer>();
+        
+        if (busRenderer != null)
+        {
+            busRenderer.material.color = GetColorValue(busColor);
+        }
         
         // Start Entry
         transform.position = spawnSpot.position - new Vector3(0, 5f, 0); // Start below spot
@@ -112,183 +123,115 @@ public class Bus : MonoBehaviour, IPointerDownHandler
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
             transform.position = Vector3.Lerp(start, target, t);
-            
-            // Rotation - Fix: Face the target while moving
-            Vector3 dir = (target - transform.position).normalized;
-            if (dir != Vector3.zero)
-            {
-                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.AngleAxis(angle, Vector3.forward), Time.deltaTime * 15f);
-            }
-            
             yield return null;
         }
         transform.position = target;
     }
 
+    // MAIN LOOP
     private IEnumerator LifeCycleRoutine()
     {
-        // 1. Wait until Tapped AND at front
-        yield return new WaitUntil(() => tapToStart);
-        
-        // 1b. Wait for Clear Entry
-        if (currentPath != null)
+        // 1. Wait for Tap
+        while (!tapToStart)
         {
-             Vector3 firstPoint = currentPath.GetPoint(0f);
-             while (true)
-             {
-                 bool blocked = false;
-                 Collider2D[] limits = Physics2D.OverlapCircleAll(firstPoint, _detectionRadius);
-
-                 foreach (var hit in limits)
-                 {
-                     Bus b = hit.GetComponent<Bus>();
-                     if (b != null)
-                     {
-                         if (b == this) continue;
-                         if (b.IsInQueue) continue; // Ignore queued neighbors
-                         
-                         // Blocked by active bus
-                         blocked = true;
-                         break;
-                     }
-                 }
-                 
-                 if (!blocked) break; // Path is clear!
-                 
-                 // Wait and retry
-                 yield return new WaitForSeconds(0.1f);
-             }
-        }
-        
-        isInQueue = false; // Leaving queue
-        tapToStart = false; // Reset
-        
-        // 2. Move to Station (First point of path)
-        if (currentPath != null)
-        {
-            Vector3 stationPos = currentPath.GetPoint(0f);
-            yield return StartCoroutine(MoveToPosition(stationPos, 1.0f));
+            yield return null;
         }
 
-        // Notify Manager that I have cleared the area and am effective starting the path
-        OnLeaveQueue?.Invoke(this);
+        // 2. Wait for Clear Path (Front check)
+        while (IsPathBlocked())
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
         
-        // 3. Loop on Spline until full or no matches
+        // 3. Move to Spline Start
+        // We assume the Spline starts near the front waiting spot. 
+        // We just snap/lerp to T=0.
+        isInQueue = false;
+        OnLeaveQueue?.Invoke(this); // Notify Manager to advance queue
+        
+        yield return StartCoroutine(MoveToPosition(currentPath.GetPointOnPath(0), 0.5f));
+        
+        // 4. Follow Path Loop
         isMoving = true;
-        yield return StartCoroutine(LoopOnPath());
+        while (isMoving)
+        {
+            // Drive
+            LoopOnPath();
+            yield return null;
+        }
         
-        // 4. Exit
-        isExiting = true;
-        isMoving = false;
-        yield return StartCoroutine(ExitScene());
-        
-        // Done
+        // 5. Exit (Handled in LoopOnPath logic when full/end)
+        // Cleanup
         OnBusDeparted?.Invoke(this);
         Destroy(gameObject);
     }
 
-    private bool isLoadingPassengers = false; // Flag to pause movement
-
-    private IEnumerator LoopOnPath()
+    private void LoopOnPath()
     {
-        currentT = 0f;
+        if (isLoadingPassengers) return;
+
+        // Move T
+        // Calculate speed relative to path length? 
+        // For SimpleSpline, T is 0..1. 
+        // Distance approx = Speed * DT. 
+        // T_delta = Distance / TotalLength. 
+        // Let's assume a fixed increment for now or estimate length.
+        float pathLengthApprox = 50f; // Mock length
+        float tIncrement = (speed * Time.deltaTime) / pathLengthApprox;
         
-        // Infinite loop until full AND passed threshold
-        // We want to exit ONLY if we are full AND we are near the end of the loop (e.g. > 0.8)
-        // OR if we just want to keep looping until we find passengers.
+        currentT += tIncrement;
+        if (currentT > 1.0f) currentT = 0f; // Loop
         
-        while (true)
+        Vector3 pos = currentPath.GetPointOnPath(currentT);
+        
+        // Rotation: Look at next point
+        Vector3 nextPos = currentPath.GetPointOnPath(currentT + 0.01f);
+        Vector3 dir = (nextPos - pos).normalized;
+        if (dir != Vector3.zero)
         {
-            // Exit Condition: Full AND past a certain point on the track (e.g. 90% of lap)
-            // This ensures we don't snap to exit from the start.
-            if (passengers.Count >= capacity && currentT > 0.8f)
-            {
-                break; 
-            }
-
-            // 0. Pause if loading
-            if (isLoadingPassengers)
-            {
-                yield return null;
-                continue;
-            }
-
-            // PHYSICS CHECK FOR OVERLAP
-            Vector3 checkPos = transform.position + (transform.right * _forwardCheckDistance);
-            bool blocked = false;
-            Collider2D[] limits = Physics2D.OverlapCircleAll(checkPos, _detectionRadius);
-            foreach (var hit in limits)
-            {
-                Bus other = hit.GetComponent<Bus>();
-                if (other != null && other != this)
-                {
-                    if (other.IsInQueue) continue;
-                    blocked = true;
-                    break;
-                }
-            }
-            
-            if (blocked)
-            {
-                yield return null;
-                continue; // Blocked! Wait this frame.
-            }
-
-            // Move along spline
-            // Speed logic: slower if blocked ahead? (Already handled by stop)
-            float step = (speed * 0.05f) * Time.deltaTime; 
-            currentT += step;
-            
-            if (currentT >= 1.0f)
-            {
-                currentT -= 1.0f; // Loop
-            }
-
-            Vector3 nextPos = currentPath.GetPoint(currentT);
-            
-            // Rotation
-            Vector3 dir = (nextPos - transform.position).normalized;
-            if (dir != Vector3.zero)
-            {
-                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.AngleAxis(angle, Vector3.forward), Time.deltaTime * 10f);
-            }
-            
-            transform.position = nextPos;
-            
-            // Interaction: Check for Stop Node
-            CheckForStopNode();
-
-            yield return null;
+             transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
+        }
+        
+        transform.position = pos;
+        
+        // Check for Stops
+        CheckForStopNode();
+        
+        // Exit Condition: If Full and near exit? 
+        // Or if Full and loop completed X times?
+        // Let's say: If Full, we detach from Spline and move to ExitPoint
+        if (passengers.Count >= capacity && currentT > 0.8f) // Near end of loop
+        {
+            // Break loop and drive to exit
+            isMoving = false;
+            StartCoroutine(DriveToExitRoutine());
         }
     }
-    
+
     private void CheckForStopNode()
     {
-        // Scan for nodes to stop at
-        Collider2D[] limits = Physics2D.OverlapCircleAll(transform.position, 1.5f); 
+        // Check for Nodes with characters of my Color
+        // Using 3D Physics Overlap
+        Collider[] limits = Physics.OverlapSphere(transform.position, _detectionRadius); 
         foreach (var hit in limits)
         {
             Node node = hit.GetComponent<Node>();
             if (node != null)
             {
-                // If node has matching characters AND we are not already full
                 if (passengers.Count < capacity && node.HasCharacter(this.color))
                 {
-                    // FIX: Don't stop immediately upon entering trigger.
-                    // Drive along the path until we are CLOSE to the StopPoint.
+                    // Check Stop Point proximity
                     if (node.stopPoint != null)
                     {
                         float dist = Vector3.Distance(transform.position, node.stopPoint.position);
-                        if (dist > 0.5f) // Threshold: Keep driving until close
+                        if (dist > 0.5f) // Keep driving until close
                         {
                              continue; 
                         }
                     }
                     
                     StartCoroutine(StopAndLoadRoutine(node));
-                    break; // Only handle one node at a time
+                    break; 
                 }
             }
         }
@@ -296,12 +239,11 @@ public class Bus : MonoBehaviour, IPointerDownHandler
 
     private IEnumerator StopAndLoadRoutine(Node node)
     {
-        isLoadingPassengers = true; // Pauses the LoopOnPath movement
+        isLoadingPassengers = true; 
         
         // 1. Move to Stop Point (Fine adjustment)
         if (node.stopPoint != null)
         {
-            // We are already close (dist < 0.5f), so a quick lerp is fine to "Park" perfectly.
             yield return StartCoroutine(MoveToPosition(node.stopPoint.position, 0.5f)); 
         }
         
@@ -309,101 +251,83 @@ public class Bus : MonoBehaviour, IPointerDownHandler
         yield return StartCoroutine(LoadPassengersRoutine(node));
         
         // 3. Resume
-        // Since we drove here on the path, 'currentT' is already approximately correct.
-        // We might be slightly offset by the parking lerp, but it shouldn't cause a huge snap.
-        
         isLoadingPassengers = false;
     }
-    
+
     private IEnumerator LoadPassengersRoutine(Node node)
     {
         while (passengers.Count < capacity && node.HasCharacter(this.color))
         {
-            Character c = node.GetFirstMatchingCharacter(this.color);
+            Character c = node.GetNextCharacter(this.color);
             if (c != null)
             {
-                // Transfer
-                node.RemoveCharacter(c);
-                c.transform.SetParent(this.transform);
-                
-                // Animate jump? For now just hide or local pos
-                c.transform.localPosition = Vector3.zero; 
-                c.gameObject.SetActive(false); 
-                
                 passengers.Add(c);
-                Debug.Log($"Bus {color} picked up passenger. Count: {passengers.Count}/{capacity}");
-                
-                yield return new WaitForSeconds(0.2f);
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
+                // Animate Character to Seat
+                int seatIdx = passengers.Count - 1;
+                Transform seat = transform; // Fallback
+                if (seatIdx < seatPositions.Length && seatPositions[seatIdx] != null) seat = seatPositions[seatIdx];
 
-    private IEnumerator ExitScene()
+                c.MoveToBus(seat, this);
+            }
+            yield return new WaitForSeconds(0.2f); // Load speed
+        }
+        yield return new WaitForSeconds(0.5f); // Wait a bit before leaving
+    }
+    
+    // Front Collision Check
+    private bool IsPathBlocked()
     {
-        // Drive off to Exit Point
-        if (exitPoint == null)
+        // Cast ray forward
+        // In 3D, forward is transform.forward
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, _forwardCheckDistance))
         {
-            // Fallback
-            Vector3 startPos = transform.position;
-            Vector3 exitDir = transform.right; 
-            Vector3 endPos = startPos + (exitDir * 20f); 
-            
-            float elapsed = 0f;
-            float duration = 2.0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                transform.position = Vector3.Lerp(startPos, endPos, elapsed / duration);
-                yield return null;
-            }
+            Bus otherBus = hit.collider.GetComponent<Bus>();
+            if (otherBus != null) return true;
         }
-        else
-        {
-            Vector3 startPos = transform.position;
-            Vector3 endPos = exitPoint.position;
-            
-            float distance = Vector3.Distance(startPos, endPos);
-            float duration = distance / speed; 
-            float elapsed = 0f;
-            
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = elapsed / duration;
-                transform.position = Vector3.Lerp(startPos, endPos, t);
-                 // Rotation
-                Vector3 dir = (endPos - startPos).normalized;
-                if (dir != Vector3.zero)
-                {
-                   float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                   transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.AngleAxis(angle, Vector3.forward), Time.deltaTime * 10f);
-                }
-                yield return null;
-            }
-        }
+        return false;
     }
 
+    private IEnumerator DriveToExitRoutine()
+    {
+        // Simple move to exit point
+        if (exitPoint != null)
+        {
+            while (Vector3.Distance(transform.position, exitPoint.position) > 0.5f)
+            {
+                // Move towards exit
+                transform.position = Vector3.MoveTowards(transform.position, exitPoint.position, speed * Time.deltaTime);
+                
+                // Rot
+                Vector3 dir = (exitPoint.position - transform.position).normalized;
+                if(dir != Vector3.zero) transform.rotation = Quaternion.LookRotation(dir);
+                
+                yield return null;
+            }
+        }
+        
+        // Done
+        OnBusDeparted?.Invoke(this);
+        Destroy(gameObject);
+    }
+
+    // Debug Gizmos
+    // Debug Gizmos
     private void OnDrawGizmosSelected()
     {
-        // Visualize Forward Collision Check
-        Gizmos.color = Color.yellow;
-        Vector3 forwardCheckPos = transform.position + (transform.right * _forwardCheckDistance);
-        Gizmos.DrawWireSphere(forwardCheckPos, _detectionRadius);
+        Gizmos.color = Color.red;
+        // Check forward
+        Gizmos.DrawLine(transform.position, transform.position + transform.forward * _forwardCheckDistance);
         
-        // Visualize Entry Check (only if path is assigned)
+        // Detection Radius
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+
+        // Entry point visualization if enabled
         if (currentPath != null)
         {
             Gizmos.color = Color.cyan;
-            Vector3 entryPos = currentPath.GetPoint(0f);
-            Gizmos.DrawWireSphere(entryPos, _detectionRadius);
+            // GetPointOnPath(0) is the start
+            Gizmos.DrawWireSphere(currentPath.GetPointOnPath(0f), 0.5f);
         }
-        
-        // Visualize Pickup Radius
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, 1.5f);
     }
 }

@@ -7,20 +7,24 @@ public class Node : MonoBehaviour
     private void Reset()
     {
         // Auto-configure collider when script is added
-        BoxCollider2D col = GetComponent<BoxCollider2D>();
-        if (col == null) col = gameObject.AddComponent<BoxCollider2D>();
+        BoxCollider col = GetComponent<BoxCollider>(); // Changed from BoxCollider2D to BoxCollider
+        if (col == null) col = gameObject.AddComponent<BoxCollider>(); // Changed from BoxCollider2D to BoxCollider
         col.isTrigger = true;
-        col.size = new Vector2(2, 2);
+        col.size = new Vector3(2, 2, 2); // Changed from Vector2 to Vector3 for 3D collider
     }
 
     private void Awake()
     {
         // Ensure runtime safety
-        BoxCollider2D col = GetComponent<BoxCollider2D>();
-        if (col == null) col = gameObject.AddComponent<BoxCollider2D>();
+        BoxCollider col = GetComponent<BoxCollider>(); // Changed from BoxCollider2D to BoxCollider
+        if (col == null) col = gameObject.AddComponent<BoxCollider>(); // Changed from BoxCollider2D to BoxCollider
         if (!col.isTrigger) col.isTrigger = true;
     }
 
+    private void Start()
+    {
+       // If using 3D primitives (like Capsules), they might already have a renderer we can reuse or check
+    }
 
 
     [Header("Node Configuration")]
@@ -36,7 +40,7 @@ public class Node : MonoBehaviour
     
     public float batchSpacing = 4.0f; // Gap between batches
     public float spacingX = 0.8f;
-    public float spacingY = 0.8f;
+    public float spacingZ = 0.8f; // Changed from spacingY
 
     public Node[] nextNodes; 
     public int currentPathIndex = 0;
@@ -111,15 +115,17 @@ public class Node : MonoBehaviour
         return false;
     }
 
-    public Character GetFirstMatchingCharacter(CharacterColor color)
+    public Character GetNextCharacter(CharacterColor color)
     {
         if (batches.Count > 0)
         {
             var frontBatch = batches[0];
             if (!frontBatch.IsEmpty && frontBatch.color == color)
             {
-                // Return first char
-                return frontBatch.charList[0];
+                // Return first char and remove it
+                Character c = frontBatch.charList[0];
+                RemoveCharacter(c);
+                return c;
             }
         }
         return null;
@@ -254,20 +260,18 @@ public class Node : MonoBehaviour
                 if (queueDirection == QueueDirection.Vertical)
                 {
                     // Vertical Queue (Flows Up):
-                    // Rows go Backwards (-Y)
+                    // Rows go Backwards (-Y) -> Now (-Z)
                     // Cols go Sideways (X) centered
                     float xPos = (c - (cols - 1) * 0.5f) * spacingX;
-                    float yPos = -(r * spacingY); 
-                    slotPos = new Vector3(xPos, yPos, 0);
+                    float zPos = -(r * spacingZ); 
+                    slotPos = new Vector3(xPos, 0, zPos);
                 }
                 else
                 {
                     // Horizontal Queue (Flows Left):
-                    // Rows go Backwards (+X or -X? Flow is Left, so Back is Right +X)
-                    // Cols go Sideways (Y) centered (or Z?) - Game is 2D, so Y.
                     float xPos = (r * spacingX); // Extending Right
-                    float yPos = (c - (cols - 1) * 0.5f) * spacingY;
-                    slotPos = new Vector3(xPos, yPos, 0);
+                    float zPos = (c - (cols - 1) * 0.5f) * spacingZ;
+                    slotPos = new Vector3(xPos, 0, zPos);
                 }
                 
                 slot.transform.localPosition = slotPos;
@@ -307,11 +311,7 @@ public class Node : MonoBehaviour
         Character c = charObj.GetComponent<Character>();
         if (c == null) c = charObj.AddComponent<Character>();
         
-        // Ensure Renderer
-        if (c.visualRenderer == null) c.visualRenderer = charObj.GetComponent<Renderer>();
-        // If prefab has children with renderers, might need GetComponentInChildren
-        if (c.visualRenderer == null) c.visualRenderer = charObj.GetComponentInChildren<Renderer>();
-
+        // Remove direct Renderer access, Character handles it in SetColor
         c.SetColor(cType); 
         
         return c;
