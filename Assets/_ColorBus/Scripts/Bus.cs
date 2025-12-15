@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class Bus : MonoBehaviour, IPointerDownHandler
+public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 {
     [Header("Bus Stats")]
     public CharacterColor color;
@@ -37,8 +37,25 @@ public class Bus : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        Debug.Log($"Bus Clicked via EventSystem! InQueue: {isInQueue}, Index: {queueIndex}");
-        // Only allow start if in first two spots (index 0 or 1)
+        Debug.Log("OnPointerDown Event Received!");
+        TryLaunchBus();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        Debug.Log("OnPointerClick Event Received!");
+        TryLaunchBus();
+    }
+
+    // Fallback for direct Unity Input without Raycaster
+    private void OnMouseDown()
+    {
+        Debug.Log("OnMouseDown Event Received!");
+        TryLaunchBus();
+    }
+
+    private void TryLaunchBus()
+    {
         if (isInQueue && queueIndex <= 1)
         {
             // Check Limits
@@ -51,13 +68,8 @@ public class Bus : MonoBehaviour, IPointerDownHandler
                 }
             }
 
-            // Just mark as tapped. The LifeCycleRoutine will wait for clear path.
             Debug.Log("Bus Tap Received. Queuing start...");
             tapToStart = true;
-        }
-        else
-        {
-             Debug.Log("Bus Tap Ignored (Wrong State/Index).");
         }
     }
 
@@ -71,23 +83,34 @@ public class Bus : MonoBehaviour, IPointerDownHandler
         
         // Visual Tint
         if (busRenderer == null) busRenderer = GetComponentInChildren<Renderer>();
-        
         if (busRenderer != null)
         {
             busRenderer.material.color = GetColorValue(busColor);
         }
         
-        // Start Entry
-        transform.position = spawnSpot.position - new Vector3(0, 5f, 0); // Start below spot
+        // Spawn Logic: 
+        // Enters from "Below" (-Z) and moves UP to the spot (+Z direction relative to spawn).
+        // User requested Y Rotation 180 (Facing Camera/Down).
+        Vector3 startOffset = new Vector3(0, 0, 15f); 
+        transform.position = spawnSpot.position + startOffset; 
+        
+        // Force Rotation 180
+        transform.rotation = Quaternion.Euler(0, 180, 0); 
+        
+        // Move to Spot WITHOUT rotating (Keep facing 180)
         StartCoroutine(QueueEntryRoutine(spawnSpot.position));
     }
     
     public void UpdateQueuePosition(Transform newSpot, int newIndex)
     {
         queueIndex = newIndex;
-        // Animate to new spot
+        // Slide to next spot, keeping rotation (180)
         StartCoroutine(MoveToQueueSpot(newSpot.position));
     }
+
+    [Header("Animation Settings")]
+    public float spawnEntryDuration = 1.5f;
+    public float queueShiftDuration = 0.5f;
 
     private Color GetColorValue(CharacterColor type)
     {
@@ -103,29 +126,41 @@ public class Bus : MonoBehaviour, IPointerDownHandler
 
     private IEnumerator QueueEntryRoutine(Vector3 targetPos)
     {
-        // Use generic move
-        yield return StartCoroutine(MoveToPosition(targetPos, 0.5f));
-        // Wait for loop trigger
+        yield return StartCoroutine(MoveToPosition(targetPos, spawnEntryDuration, false));
         StartCoroutine(LifeCycleRoutine());
     }
     
     private IEnumerator MoveToQueueSpot(Vector3 targetPos)
     {
-        yield return StartCoroutine(MoveToPosition(targetPos, 0.5f));
+        yield return StartCoroutine(MoveToPosition(targetPos, queueShiftDuration, false));
     }
     
-    private IEnumerator MoveToPosition(Vector3 target, float duration)
+    private IEnumerator MoveToPosition(Vector3 target, float duration, bool lookAtTarget = true)
     {
         Vector3 start = transform.position;
+        Quaternion startRot = transform.rotation;
+        
+        Quaternion targetRot = startRot;
+        if (lookAtTarget)
+        {
+             Vector3 dir = (target - start).normalized;
+             if(dir != Vector3.zero) targetRot = Quaternion.LookRotation(dir);
+        }
+        
         float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
             transform.position = Vector3.Lerp(start, target, t);
+            if (lookAtTarget)
+            {
+               transform.rotation = Quaternion.Slerp(startRot, targetRot, t * 5f);
+            }
             yield return null;
         }
         transform.position = target;
+        if (lookAtTarget) transform.rotation = targetRot;
     }
 
     // MAIN LOOP
