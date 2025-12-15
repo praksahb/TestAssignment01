@@ -56,6 +56,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     [SerializeField] private bool _isInQueue = false;
 
     public bool IsInQueue => _isInQueue; // Expose for checks
+    public bool IsDeparting => _tapToStart; // True if tapped/launching but maybe still waiting to enter path
 
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -78,6 +79,8 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private void TryLaunchBus()
     {
+        if (_tapToStart) return; // Prevent double taps
+
         if (_isInQueue && _queueIndex <= 1)
         {
             // Check Limits
@@ -162,7 +165,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         yield return StartCoroutine(MoveToPosition(targetPos, _queueShiftDuration, false));
     }
     
-    private IEnumerator MoveToPosition(Vector3 target, float duration, bool lookAtTarget = true)
+    private IEnumerator MoveToPosition(Vector3 target, float duration, bool lookAtTarget = true, bool checkCollisions = false)
     {
         Vector3 start = transform.position;
         Quaternion startRot = transform.rotation;
@@ -177,6 +180,13 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            // Collision Check pausing
+            if (checkCollisions && IsPathBlocked())
+            {
+                yield return null;
+                continue; // Skip incrementing elapsed this frame
+            }
+
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
             transform.position = Vector3.Lerp(start, target, t);
@@ -214,10 +224,15 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         // 3. Move to Spline Start
         // We assume the Spline starts near the front waiting spot. 
         // We just snap/lerp to T=0.
-        _isInQueue = false;
-        OnLeaveQueue?.Invoke(this); // Notify Manager to advance queue
+        // 3. Move to Spline Start
+        // We assume the Spline starts near the front waiting spot. 
+        // We just snap/lerp to T=0.
         
-        yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(0), 0.5f));
+        // Pass true for checkCollisions to avoid partial overlap during entry
+        yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(0), 0.5f, true, true));
+
+        _isInQueue = false;
+        OnLeaveQueue?.Invoke(this); // Notify Manager to advance queue, NOW that we have left.
         
         // 4. Follow Path Loop
         _isMoving = true;
@@ -360,11 +375,13 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         {
             // Use GetComponentInParent in case we hit a child collider (wheels, body mesh)
             Bus otherBus = hit.collider.GetComponentInParent<Bus>();
-            // Check if it is valid, not me, and NOT in the queue (parked buses shouldn't block the road)
-            if (otherBus != null && otherBus != this && !otherBus.IsInQueue) 
+            // Check if it is valid, not me, and [NOT in queue OR IS Departing]
+            // We want to stop for ANY bus on the road, OR any bus in the queue that is trying to leave.
+            // We only ignore buses that are Parked (InQueue AND !IsDeparting).
+            if (otherBus != null && otherBus != this && (!otherBus.IsInQueue || otherBus.IsDeparting)) 
             {
                 Debug.DrawLine(transform.position, hit.point, Color.red);
-                Debug.Log($"Bus {name} Blocked by {otherBus.name}. InQueue: {otherBus.IsInQueue}");
+                // Debug.Log($"Bus {name} Blocked by {otherBus.name}. InQueue: {otherBus.IsInQueue}, Departing: {otherBus.IsDeparting}");
                 return true;
             }
         }

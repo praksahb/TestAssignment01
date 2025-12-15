@@ -553,7 +553,7 @@ MonoBehaviour:
   _currentPath: {fileID: 0}
   _exitPoint: {fileID: 0}
   _forwardCheckDistance: 1
-  _detectionRadius: 1.5
+  _detectionRadius: 1
   _isInQueue: 0
   _spawnEntryDuration: 2
   _queueShiftDuration: 0.5
