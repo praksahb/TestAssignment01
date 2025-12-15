@@ -29,40 +29,72 @@ public class Node : MonoBehaviour
 
     [Header("Node Configuration")]
     // Replaced flat list with Batches
-    public List<CharacterBatch> batches = new List<CharacterBatch>();
+    [UnityEngine.Serialization.FormerlySerializedAs("batches")]
+    [SerializeField] private List<CharacterBatch> _batches = new List<CharacterBatch>();
+    public List<CharacterBatch> Batches => _batches;
     
     public enum QueueDirection { Vertical, Horizontal } // Vertical = Up (Stack Down), Horizontal = Left (Stack Right)? 
     
     [Header("Grid Layout")]
-    public QueueDirection queueDirection = QueueDirection.Vertical;
-    public int rows = 5; // Depth of the batch (how many char rows per batch)
-    public int cols = 2; // Width of the batch (how many columns wide)
-    
-    public float batchSpacing = 4.0f; // Gap between batches
-    public float spacingX = 0.8f;
-    public float spacingZ = 0.8f; // Changed from spacingY
+    [UnityEngine.Serialization.FormerlySerializedAs("queueDirection")]
+    [SerializeField] private QueueDirection _queueDirection = QueueDirection.Vertical;
+    public QueueDirection Direction => _queueDirection;
 
-    public Node[] nextNodes; 
-    public int currentPathIndex = 0;
+    [UnityEngine.Serialization.FormerlySerializedAs("rows")]
+    [SerializeField] private int _rows = 5; // Depth of the batch (how many char rows per batch)
+    public int Rows => _rows;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("cols")]
+    [SerializeField] private int _cols = 2; // Width of the batch (how many columns wide)
+    public int Cols => _cols;
+    
+    [UnityEngine.Serialization.FormerlySerializedAs("batchSpacing")]
+    [SerializeField] private float _batchSpacing = 4.0f; // Gap between batches
+    public float BatchSpacing => _batchSpacing;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("spacingX")]
+    [SerializeField] private float _spacingX = 0.8f;
+    public float SpacingX => _spacingX;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("spacingZ")]
+    [SerializeField] private float _spacingZ = 0.8f; // Changed from spacingY
+    public float SpacingZ => _spacingZ;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("nextNodes")]
+    [SerializeField] private Node[] _nextNodes; 
+    public Node[] NextNodes => _nextNodes; 
+
+    [UnityEngine.Serialization.FormerlySerializedAs("currentPathIndex")]
+    [SerializeField] private int _currentPathIndex = 0;
+    public int CurrentPathIndex => _currentPathIndex;
 
     [Header("Visuals")]
     // characterSlots is now legacy or used for a single batch if needed, 
     // but the batch system generates its own slots. 
-    public Transform[] characterSlots; 
+    [UnityEngine.Serialization.FormerlySerializedAs("characterSlots")]
+    [SerializeField] private Transform[] _characterSlots; 
+    public Transform[] CharacterSlots => _characterSlots;
     
     [Header("Debugging")]
-    public GameObject testCharacterPrefab; // User requested prefab reference
-    public Transform stopPoint; // Where the bus should actually stop
+    [UnityEngine.Serialization.FormerlySerializedAs("testCharacterPrefab")]
+    [SerializeField] private GameObject _testCharacterPrefab; // User requested prefab reference
+    public GameObject TestCharacterPrefab => _testCharacterPrefab;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("stopPoint")]
+    [SerializeField] private Transform _stopPoint; // Where the bus should actually stop
+    public Transform StopPoint => _stopPoint;
 
     [Header("Level Configuration")]
-    public List<CharacterColor> batchConfig = new List<CharacterColor>(); // Define the sequence here
+    [UnityEngine.Serialization.FormerlySerializedAs("batchConfig")]
+    [SerializeField] private List<CharacterColor> _batchConfig = new List<CharacterColor>(); // Define the sequence here
+    public List<CharacterColor> BatchConfig => _batchConfig;
 
     // Switch Mechanic
     public void TogglePath()
     {
-        if (nextNodes.Length > 1)
+        if (_nextNodes.Length > 1)
         {
-            currentPathIndex = (currentPathIndex + 1) % nextNodes.Length;
+            _currentPathIndex = (_currentPathIndex + 1) % _nextNodes.Length;
             UpdateSwitchVisuals();
         }
     }
@@ -74,8 +106,8 @@ public class Node : MonoBehaviour
 
     public Node GetNextNode()
     {
-        if (nextNodes == null || nextNodes.Length == 0) return null;
-        return nextNodes[currentPathIndex];
+        if (_nextNodes == null || _nextNodes.Length == 0) return null;
+        return _nextNodes[_currentPathIndex];
     }
     
     private void OnDrawGizmos()
@@ -84,18 +116,18 @@ public class Node : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, 1.5f); // Matches Bus detection radius
         
         // Visual connection to batches
-        if(batches.Count > 0 && batches[0].batchRoot != null)
+        if(_batches.Count > 0 && _batches[0].BatchRoot != null)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position, batches[0].batchRoot.position);
+            Gizmos.DrawLine(transform.position, _batches[0].BatchRoot.position);
         }
         
         // Stop Point Visual
-        if (stopPoint != null)
+        if (_stopPoint != null)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(stopPoint.position, 0.5f);
-            Gizmos.DrawLine(transform.position, stopPoint.position);
+            Gizmos.DrawWireSphere(_stopPoint.position, 0.5f);
+            Gizmos.DrawLine(transform.position, _stopPoint.position);
         }
     }
     
@@ -104,10 +136,10 @@ public class Node : MonoBehaviour
     public bool HasCharacter(CharacterColor color)
     {
         // Only check the FRONT batch
-        if (batches.Count > 0)
+        if (_batches.Count > 0)
         {
-            var frontBatch = batches[0];
-            if (!frontBatch.IsEmpty && frontBatch.color == color)
+            var frontBatch = _batches[0];
+            if (!frontBatch.IsEmpty && frontBatch.BatchColor == color)
             {
                 return true;
             }
@@ -117,13 +149,13 @@ public class Node : MonoBehaviour
 
     public Character GetNextCharacter(CharacterColor color)
     {
-        if (batches.Count > 0)
+        if (_batches.Count > 0)
         {
-            var frontBatch = batches[0];
-            if (!frontBatch.IsEmpty && frontBatch.color == color)
+            var frontBatch = _batches[0];
+            if (!frontBatch.IsEmpty && frontBatch.BatchColor == color)
             {
                 // Return first char and remove it
-                Character c = frontBatch.charList[0];
+                Character c = frontBatch.CharList[0];
                 RemoveCharacter(c);
                 return c;
             }
@@ -134,9 +166,9 @@ public class Node : MonoBehaviour
     public void RemoveCharacter(Character character)
     {
         // We assume it's in the front batch if we just asked for it
-        if (batches.Count > 0)
+        if (_batches.Count > 0)
         {
-            var frontBatch = batches[0];
+            var frontBatch = _batches[0];
             frontBatch.RemoveCharacter(character);
             
             // Check if batch is done
@@ -149,15 +181,15 @@ public class Node : MonoBehaviour
     
     private void RemoveFrontBatch()
     {
-        if (batches.Count == 0) return;
+        if (_batches.Count == 0) return;
         
-        CharacterBatch oldBatch = batches[0];
-        batches.RemoveAt(0);
+        CharacterBatch oldBatch = _batches[0];
+        _batches.RemoveAt(0);
         
         // Cleanup visuals for old batch root?
-        if (oldBatch.batchRoot != null)
+        if (oldBatch.BatchRoot != null)
         {
-            Destroy(oldBatch.batchRoot.gameObject);
+            Destroy(oldBatch.BatchRoot.gameObject);
         }
         
         // Move remaining batches forward
@@ -166,14 +198,14 @@ public class Node : MonoBehaviour
     
     private void UpdateBatchPositions()
     {
-        for (int i = 0; i < batches.Count; i++)
+        for (int i = 0; i < _batches.Count; i++)
         {
-            CharacterBatch batch = batches[i];
+            CharacterBatch batch = _batches[i];
             Vector3 targetPos = GetBatchPosition(i);
             
-            if (batch.batchRoot != null)
+            if (batch.BatchRoot != null)
             {
-                batch.batchRoot.localPosition = targetPos; 
+                batch.BatchRoot.localPosition = targetPos; 
             }
         }
     }
@@ -189,9 +221,9 @@ public class Node : MonoBehaviour
         // Looking at the image, the horizontal queue flows LEFT (into the bus). So batches accept from Right. 
         // So batches stack to the Right (+X).
         
-        float offset = index * batchSpacing;
+        float offset = index * _batchSpacing;
         
-        switch (queueDirection)
+        switch (_queueDirection)
         {
             case QueueDirection.Vertical:
                 return new Vector3(0, -offset, 0);
@@ -207,7 +239,7 @@ public class Node : MonoBehaviour
     [ContextMenu("Generate Grid Batches")]
     public void GenerateGridBatches()
     {
-        batches.Clear();
+        _batches.Clear();
         
         // Cleanup old children
         List<GameObject> childrenToDestroy = new List<GameObject>();
@@ -219,11 +251,11 @@ public class Node : MonoBehaviour
         foreach(var g in childrenToDestroy) DestroyImmediate(g);
         
         // Use Config if available, else Default
-        if (batchConfig != null && batchConfig.Count > 0)
+        if (_batchConfig != null && _batchConfig.Count > 0)
         {
-            for (int i = 0; i < batchConfig.Count; i++)
+            for (int i = 0; i < _batchConfig.Count; i++)
             {
-                CreateBatch(i, batchConfig[i]);
+                CreateBatch(i, _batchConfig[i]);
             }
         }
         else
@@ -238,39 +270,39 @@ public class Node : MonoBehaviour
     private void CreateBatch(int index, CharacterColor cColor)
     {
         CharacterBatch batch = new CharacterBatch();
-        batch.color = cColor;
+        batch.BatchColor = cColor;
         
         GameObject batchObj = new GameObject($"Batch_{index}_{cColor}");
         batchObj.transform.SetParent(transform);
         batchObj.transform.localPosition = GetBatchPosition(index);
         batchObj.transform.localRotation = Quaternion.identity;
         
-        batch.batchRoot = batchObj.transform;
+        batch.BatchRoot = batchObj.transform;
         
         // Create Slots
-        for (int r = 0; r < rows; r++)
+        for (int r = 0; r < _rows; r++)
         {
-            for (int c = 0; c < cols; c++)
+            for (int c = 0; c < _cols; c++)
             {
                 GameObject slot = new GameObject($"Slot_{r}_{c}");
                 slot.transform.SetParent(batchObj.transform);
                 
                 Vector3 slotPos = Vector3.zero;
                 
-                if (queueDirection == QueueDirection.Vertical)
+                if (_queueDirection == QueueDirection.Vertical)
                 {
                     // Vertical Queue (Flows Up):
                     // Rows go Backwards (-Y) -> Now (-Z)
                     // Cols go Sideways (X) centered
-                    float xPos = (c - (cols - 1) * 0.5f) * spacingX;
-                    float zPos = -(r * spacingZ); 
+                    float xPos = (c - (_cols - 1) * 0.5f) * _spacingX;
+                    float zPos = -(r * _spacingZ); 
                     slotPos = new Vector3(xPos, 0, zPos);
                 }
                 else
                 {
                     // Horizontal Queue (Flows Left):
-                    float xPos = (r * spacingX); // Extending Right
-                    float zPos = (c - (cols - 1) * 0.5f) * spacingZ;
+                    float xPos = (r * _spacingX); // Extending Right
+                    float zPos = (c - (_cols - 1) * 0.5f) * _spacingZ;
                     slotPos = new Vector3(xPos, 0, zPos);
                 }
                 
@@ -279,20 +311,20 @@ public class Node : MonoBehaviour
                 
                 // Spawn
                 Character newChar = SpawnCharacterAt(slot.transform, cColor);
-                batch.charList.Add(newChar);
+                batch.CharList.Add(newChar);
             }
         }
         
-        batches.Add(batch);
+        _batches.Add(batch);
     }
     
     private Character SpawnCharacterAt(Transform slot, CharacterColor cType)
     {
         GameObject charObj;
         
-        if (testCharacterPrefab != null)
+        if (_testCharacterPrefab != null)
         {
-            charObj = (GameObject)Instantiate(testCharacterPrefab, slot.position, slot.rotation, slot);
+            charObj = (GameObject)Instantiate(_testCharacterPrefab, slot.position, slot.rotation, slot);
         }
         else
         {

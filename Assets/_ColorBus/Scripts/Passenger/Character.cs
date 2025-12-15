@@ -12,34 +12,41 @@ public enum CharacterColor
 
 public class Character : MonoBehaviour
 {
-    public CharacterColor color;
-    public float speed = 5.0f;
-    private Renderer myRenderer;
+    [Header("Settings")]
+    [UnityEngine.Serialization.FormerlySerializedAs("color")]
+    [SerializeField] private CharacterColor _characterColor;
+    public CharacterColor CharacterColor { get => _characterColor; set => _characterColor = value; }
+
+    [UnityEngine.Serialization.FormerlySerializedAs("speed")]
+    [SerializeField] private float _speed = 5.0f;
+    public float Speed => _speed;
+
+    private Renderer _myRenderer;
 
     private void Awake()
     {
-        myRenderer = GetComponentInChildren<Renderer>();
+        _myRenderer = GetComponentInChildren<Renderer>();
     }
 
     private void OnEnable()
     {
-        SetColor(color);
+        SetColor(_characterColor);
     }
 
     private void OnValidate()
     {
-        SetColor(color);
+        SetColor(_characterColor);
     }
 
     public void SetColor(CharacterColor c)
     {
-        this.color = c;
+        _characterColor = c;
         // visual update
-        if (myRenderer != null)
+        if (_myRenderer != null)
         {
             // Assuming the shader has a standard Color property (BaseColor or _Color)
             // For standard material:
-            myRenderer.material.color = GetColorFromEnum(c);
+            _myRenderer.material.color = GetColorFromEnum(c);
         }
     }
     
@@ -67,7 +74,7 @@ public class Character : MonoBehaviour
         
         while (Vector3.Distance(transform.position, targetSeat.position) > 0.1f)
         {
-            transform.position = Vector3.MoveTowards(transform.position, targetSeat.position, speed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, targetSeat.position, _speed * Time.deltaTime);
             yield return null;
         }
         

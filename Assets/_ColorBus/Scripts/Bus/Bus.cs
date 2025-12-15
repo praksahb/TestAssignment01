@@ -6,34 +6,56 @@ using UnityEngine.EventSystems;
 public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 {
     [Header("Bus Stats")]
-    public CharacterColor color;
-    public int capacity = 5;
-    public float speed = 5f;
-    public List<Character> passengers = new List<Character>();
-    public Transform[] seatPositions; // Restored
+    [UnityEngine.Serialization.FormerlySerializedAs("color")]
+    [SerializeField] private CharacterColor _busColor;
+    public CharacterColor BusColor { get => _busColor; set => _busColor = value; }
+
+    [UnityEngine.Serialization.FormerlySerializedAs("capacity")]
+    [SerializeField] private int _capacity = 5;
+    public int Capacity => _capacity;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("speed")]
+    [SerializeField] private float _speed = 5f;
+    public float Speed => _speed;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("passengers")]
+    [SerializeField] private List<Character> _passengers = new List<Character>();
+    public List<Character> Passengers => _passengers;
+
+    [UnityEngine.Serialization.FormerlySerializedAs("seatPositions")]
+    [SerializeField] private Transform[] _seatPositions; // Restored
+    public Transform[] SeatPositions => _seatPositions;
     
     [Header("Visuals")]
-    public Renderer busRenderer; // Inspector Reference
+    [UnityEngine.Serialization.FormerlySerializedAs("busRenderer")]
+    [SerializeField] private Renderer _busRenderer; // Inspector Reference
+    public Renderer BusRenderer => _busRenderer;
     
     [Header("Path Settings")]
-    public SimpleSpline currentPath;
-    public Transform exitPoint; // Point to drive to when full
+    [UnityEngine.Serialization.FormerlySerializedAs("currentPath")]
+    [SerializeField] private SimpleSpline _currentPath;
+    public SimpleSpline CurrentPath { get => _currentPath; set => _currentPath = value; }
+
+    [UnityEngine.Serialization.FormerlySerializedAs("exitPoint")]
+    [SerializeField] private Transform _exitPoint; // Point to drive to when full
+    public Transform ExitPoint { get => _exitPoint; set => _exitPoint = value; }
+
     [SerializeField] private float _forwardCheckDistance = 1.25f;
     [SerializeField] private float _detectionRadius = .75f;
 
-    private bool isMoving = false;
-    private bool tapToStart = false;
-    private float currentT = 0f;
-    private bool isExiting = false;
-    private bool isLoadingPassengers = false;
+    private bool _isMoving = false;
+    private bool _tapToStart = false;
+    private float _currentT = 0f;
+    private bool _isExiting = false;
+    private bool _isLoadingPassengers = false;
 
     public System.Action<Bus> OnBusDeparted;
     public System.Action<Bus> OnLeaveQueue; // New event for when bus leaves the waiting spot
     
-    private int queueIndex = -1;
-    private bool isInQueue = false;
+    private int _queueIndex = -1;
+    [SerializeField] private bool _isInQueue = false;
 
-    public bool IsInQueue => isInQueue; // Expose for checks
+    public bool IsInQueue => _isInQueue; // Expose for checks
 
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -56,7 +78,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private void TryLaunchBus()
     {
-        if (isInQueue && queueIndex <= 1)
+        if (_isInQueue && _queueIndex <= 1)
         {
             // Check Limits
             if (BusSpawner.Instance != null)
@@ -69,30 +91,30 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             }
 
             Debug.Log("Bus Tap Received. Queuing start...");
-            tapToStart = true;
+            _tapToStart = true;
         }
     }
 
     public void InitializeAsQueued(SimpleSpline path, Transform exit, CharacterColor busColor, Transform spawnSpot, int index)
     {
-        currentPath = path;
-        exitPoint = exit;
-        color = busColor;
-        queueIndex = index;
-        isInQueue = true;
+        _currentPath = path;
+        _exitPoint = exit;
+        _busColor = busColor;
+        _queueIndex = index;
+        _isInQueue = true;
         
         // Visual Tint
-        if (busRenderer == null) busRenderer = GetComponentInChildren<Renderer>();
-        if (busRenderer != null)
+        if (_busRenderer == null) _busRenderer = GetComponentInChildren<Renderer>();
+        if (_busRenderer != null)
         {
-            busRenderer.material.color = GetColorValue(busColor);
+            _busRenderer.material.color = GetColorValue(busColor);
         }
         
         // Spawn Logic: 
         // Enters from "Below" (-Z) and moves UP to the spot (+Z direction relative to spawn).
         // User requested Y Rotation 180 (Facing Camera/Down).
-        Vector3 startOffset = new Vector3(0, 0, 15f); 
-        transform.position = spawnSpot.position + startOffset; 
+        Vector3 startOffset = new Vector3(0, 0, 10f); 
+        transform.position = spawnSpot.position + startOffset;
         
         // Force Rotation 180
         transform.rotation = Quaternion.Euler(0, 180, 0); 
@@ -103,36 +125,41 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     
     public void UpdateQueuePosition(Transform newSpot, int newIndex)
     {
-        queueIndex = newIndex;
+        _queueIndex = newIndex;
         // Slide to next spot, keeping rotation (180)
         StartCoroutine(MoveToQueueSpot(newSpot.position));
     }
 
     [Header("Animation Settings")]
-    public float spawnEntryDuration = 1.5f;
-    public float queueShiftDuration = 0.5f;
+    [UnityEngine.Serialization.FormerlySerializedAs("spawnEntryDuration")]
+    [SerializeField] private float _spawnEntryDuration = 1.5f;
+    public float SpawnEntryDuration => _spawnEntryDuration;
 
-    private Color GetColorValue(CharacterColor type)
+    [UnityEngine.Serialization.FormerlySerializedAs("queueShiftDuration")]
+    [SerializeField] private float _queueShiftDuration = 0.5f;
+    public float QueueShiftDuration => _queueShiftDuration;
+
+    private UnityEngine.Color GetColorValue(CharacterColor type)
     {
         switch (type)
         {
-            case CharacterColor.Red: return Color.red;
-            case CharacterColor.Blue: return Color.blue;
-            case CharacterColor.Yellow: return Color.yellow;
-            case CharacterColor.Green: return Color.green;
-            default: return Color.white;
+            case CharacterColor.Red: return UnityEngine.Color.red;
+            case CharacterColor.Blue: return UnityEngine.Color.blue;
+            case CharacterColor.Yellow: return UnityEngine.Color.yellow;
+            case CharacterColor.Green: return UnityEngine.Color.green;
+            default: return UnityEngine.Color.white;
         }
     }
 
     private IEnumerator QueueEntryRoutine(Vector3 targetPos)
     {
-        yield return StartCoroutine(MoveToPosition(targetPos, spawnEntryDuration, false));
+        yield return StartCoroutine(MoveToPosition(targetPos, _spawnEntryDuration, false));
         StartCoroutine(LifeCycleRoutine());
     }
     
     private IEnumerator MoveToQueueSpot(Vector3 targetPos)
     {
-        yield return StartCoroutine(MoveToPosition(targetPos, queueShiftDuration, false));
+        yield return StartCoroutine(MoveToPosition(targetPos, _queueShiftDuration, false));
     }
     
     private IEnumerator MoveToPosition(Vector3 target, float duration, bool lookAtTarget = true)
@@ -167,7 +194,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private IEnumerator LifeCycleRoutine()
     {
         // 1. Wait for Tap
-        while (!tapToStart)
+        while (!_tapToStart)
         {
             yield return null;
         }
@@ -178,17 +205,23 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             yield return new WaitForSeconds(0.2f);
         }
         
+        if (_currentPath == null)
+        {
+            Debug.LogError("Bus: Cannot start moving, CurrentPath is NULL! Assign LevelPath in BusSpawner.");
+            yield break;
+        }
+        
         // 3. Move to Spline Start
         // We assume the Spline starts near the front waiting spot. 
         // We just snap/lerp to T=0.
-        isInQueue = false;
+        _isInQueue = false;
         OnLeaveQueue?.Invoke(this); // Notify Manager to advance queue
         
-        yield return StartCoroutine(MoveToPosition(currentPath.GetPointOnPath(0), 0.5f));
+        yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(0), 0.5f));
         
         // 4. Follow Path Loop
-        isMoving = true;
-        while (isMoving)
+        _isMoving = true;
+        while (_isMoving)
         {
             // Drive
             LoopOnPath();
@@ -203,7 +236,13 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private void LoopOnPath()
     {
-        if (isLoadingPassengers) return;
+        if (_isLoadingPassengers) return;
+        
+        // Dynamic Obstacle Check (Collision Avoidance)
+        if (IsPathBlocked())
+        {
+            return; // Brake/Wait
+        }
 
         // Move T
         // Calculate speed relative to path length? 
@@ -212,15 +251,15 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         // T_delta = Distance / TotalLength. 
         // Let's assume a fixed increment for now or estimate length.
         float pathLengthApprox = 50f; // Mock length
-        float tIncrement = (speed * Time.deltaTime) / pathLengthApprox;
+        float tIncrement = (_speed * Time.deltaTime) / pathLengthApprox;
         
-        currentT += tIncrement;
-        if (currentT > 1.0f) currentT = 0f; // Loop
+        _currentT += tIncrement;
+        if (_currentT > 1.0f) _currentT = 0f; // Loop
         
-        Vector3 pos = currentPath.GetPointOnPath(currentT);
+        Vector3 pos = _currentPath.GetPointOnPath(_currentT);
         
         // Rotation: Look at next point
-        Vector3 nextPos = currentPath.GetPointOnPath(currentT + 0.01f);
+        Vector3 nextPos = _currentPath.GetPointOnPath(_currentT + 0.01f);
         Vector3 dir = (nextPos - pos).normalized;
         if (dir != Vector3.zero)
         {
@@ -235,10 +274,10 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         // Exit Condition: If Full and near exit? 
         // Or if Full and loop completed X times?
         // Let's say: If Full, we detach from Spline and move to ExitPoint
-        if (passengers.Count >= capacity && currentT > 0.8f) // Near end of loop
+        if (_passengers.Count >= _capacity && _currentT > 0.8f) // Near end of loop
         {
             // Break loop and drive to exit
-            isMoving = false;
+            _isMoving = false;
             StartCoroutine(DriveToExitRoutine());
         }
     }
@@ -253,12 +292,12 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             Node node = hit.GetComponent<Node>();
             if (node != null)
             {
-                if (passengers.Count < capacity && node.HasCharacter(this.color))
+                if (_passengers.Count < _capacity && node.HasCharacter(this._busColor))
                 {
                     // Check Stop Point proximity
-                    if (node.stopPoint != null)
+                    if (node.StopPoint != null)
                     {
-                        float dist = Vector3.Distance(transform.position, node.stopPoint.position);
+                        float dist = Vector3.Distance(transform.position, node.StopPoint.position);
                         if (dist > 0.5f) // Keep driving until close
                         {
                              continue; 
@@ -274,33 +313,33 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private IEnumerator StopAndLoadRoutine(Node node)
     {
-        isLoadingPassengers = true; 
+        _isLoadingPassengers = true; 
         
         // 1. Move to Stop Point (Fine adjustment)
-        if (node.stopPoint != null)
+        if (node.StopPoint != null)
         {
-            yield return StartCoroutine(MoveToPosition(node.stopPoint.position, 0.5f)); 
+            yield return StartCoroutine(MoveToPosition(node.StopPoint.position, 0.5f)); 
         }
         
         // 2. Load Passengers
         yield return StartCoroutine(LoadPassengersRoutine(node));
         
         // 3. Resume
-        isLoadingPassengers = false;
+        _isLoadingPassengers = false;
     }
 
     private IEnumerator LoadPassengersRoutine(Node node)
     {
-        while (passengers.Count < capacity && node.HasCharacter(this.color))
+        while (_passengers.Count < _capacity && node.HasCharacter(this._busColor))
         {
-            Character c = node.GetNextCharacter(this.color);
+            Character c = node.GetNextCharacter(this._busColor);
             if (c != null)
             {
-                passengers.Add(c);
+                _passengers.Add(c);
                 // Animate Character to Seat
-                int seatIdx = passengers.Count - 1;
+                int seatIdx = _passengers.Count - 1;
                 Transform seat = transform; // Fallback
-                if (seatIdx < seatPositions.Length && seatPositions[seatIdx] != null) seat = seatPositions[seatIdx];
+                if (seatIdx < _seatPositions.Length && _seatPositions[seatIdx] != null) seat = _seatPositions[seatIdx];
 
                 c.MoveToBus(seat, this);
             }
@@ -310,14 +349,24 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     }
     
     // Front Collision Check
+    // Front Collision Check
+    // Front Collision Check
     private bool IsPathBlocked()
     {
         // Cast ray forward
         // In 3D, forward is transform.forward
-        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, _forwardCheckDistance))
+        // Ignore Triggers (Nodes) so we don't get blocked by them and miss the bus behind them.
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, _forwardCheckDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
         {
-            Bus otherBus = hit.collider.GetComponent<Bus>();
-            if (otherBus != null) return true;
+            // Use GetComponentInParent in case we hit a child collider (wheels, body mesh)
+            Bus otherBus = hit.collider.GetComponentInParent<Bus>();
+            // Check if it is valid, not me, and NOT in the queue (parked buses shouldn't block the road)
+            if (otherBus != null && otherBus != this && !otherBus.IsInQueue) 
+            {
+                Debug.DrawLine(transform.position, hit.point, Color.red);
+                Debug.Log($"Bus {name} Blocked by {otherBus.name}. InQueue: {otherBus.IsInQueue}");
+                return true;
+            }
         }
         return false;
     }
@@ -325,15 +374,15 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private IEnumerator DriveToExitRoutine()
     {
         // Simple move to exit point
-        if (exitPoint != null)
+        if (_exitPoint != null)
         {
-            while (Vector3.Distance(transform.position, exitPoint.position) > 0.5f)
+            while (Vector3.Distance(transform.position, _exitPoint.position) > 0.5f)
             {
                 // Move towards exit
-                transform.position = Vector3.MoveTowards(transform.position, exitPoint.position, speed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, _exitPoint.position, _speed * Time.deltaTime);
                 
                 // Rot
-                Vector3 dir = (exitPoint.position - transform.position).normalized;
+                Vector3 dir = (_exitPoint.position - transform.position).normalized;
                 if(dir != Vector3.zero) transform.rotation = Quaternion.LookRotation(dir);
                 
                 yield return null;
@@ -358,11 +407,11 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         Gizmos.DrawWireSphere(transform.position, _detectionRadius);
 
         // Entry point visualization if enabled
-        if (currentPath != null)
+        if (_currentPath != null)
         {
             Gizmos.color = Color.cyan;
             // GetPointOnPath(0) is the start
-            Gizmos.DrawWireSphere(currentPath.GetPointOnPath(0f), 0.5f);
+            Gizmos.DrawWireSphere(_currentPath.GetPointOnPath(0f), 0.5f);
         }
     }
 }

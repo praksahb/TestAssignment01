@@ -7,45 +7,52 @@ using UnityEngine.UI;
 public class UIManager : GenericSingleton<UIManager>
 {
     [Header("Panels")]
-    public GameObject levelCompletePanel;
-    public GameObject levelFailedPanel;
+    [UnityEngine.Serialization.FormerlySerializedAs("levelCompletePanel")]
+    [SerializeField] private GameObject _levelCompletePanel;
+    
+    [UnityEngine.Serialization.FormerlySerializedAs("levelFailedPanel")]
+    [SerializeField] private GameObject _levelFailedPanel;
     
     [Header("HUD")]
-    public TextMeshProUGUI activeBusCountText; // Assign in Inspector
+    [UnityEngine.Serialization.FormerlySerializedAs("activeBusCountText")]
+    [SerializeField] private TextMeshProUGUI _activeBusCountText; // Assign in Inspector
 
     [Header("Buttons")]
-    public Button nextLevelButton;
-    public Button retryButton;
+    [UnityEngine.Serialization.FormerlySerializedAs("nextLevelButton")]
+    [SerializeField] private Button _nextLevelButton;
+    
+    [UnityEngine.Serialization.FormerlySerializedAs("retryButton")]
+    [SerializeField] private Button _retryButton;
 
     private void Start()
     {
         // Ensure panels are hidden at start
-        if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
-        if (levelFailedPanel != null) levelFailedPanel.SetActive(false);
+        if (_levelCompletePanel != null) _levelCompletePanel.SetActive(false);
+        if (_levelFailedPanel != null) _levelFailedPanel.SetActive(false);
 
         // Hook up buttons
-        if (nextLevelButton != null) nextLevelButton.onClick.AddListener(OnNextLevelClicked);
-        if (retryButton != null) retryButton.onClick.AddListener(OnRetryClicked);
+        if (_nextLevelButton != null) _nextLevelButton.onClick.AddListener(OnNextLevelClicked);
+        if (_retryButton != null) _retryButton.onClick.AddListener(OnRetryClicked);
     }
     
     public void UpdateActiveBusUI(int current, int max)
     {
-        if (activeBusCountText != null)
+        if (_activeBusCountText != null)
         {
-            activeBusCountText.text = $"{current}/{max}";
+            _activeBusCountText.text = $"{current}/{max}";
         }
     }
 
     public void ShowLevelComplete()
     {
         Debug.Log("UI: Showing Level Complete");
-        if (levelCompletePanel != null) levelCompletePanel.SetActive(true);
+        if (_levelCompletePanel != null) _levelCompletePanel.SetActive(true);
     }
 
     public void ShowLevelFailed()
     {
         Debug.Log("UI: Showing Level Failed");
-        if (levelFailedPanel != null) levelFailedPanel.SetActive(true);
+        if (_levelFailedPanel != null) _levelFailedPanel.SetActive(true);
     }
 
     private void OnNextLevelClicked()
