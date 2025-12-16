@@ -13,6 +13,14 @@ public class GameManager : GenericSingleton<GameManager>
 
     public void CheckLevelStatus()
     {
+        StartCoroutine(CheckLevelStatusRoutine());
+    }
+
+    private IEnumerator CheckLevelStatusRoutine()
+    {
+        // specific delay to allow things to settle (e.g. bus destruction)
+        yield return new WaitForSeconds(1.0f);
+        
         // Check if any characters remain
         Character[] allChars = FindObjectsByType<Character>(FindObjectsSortMode.None);
         
@@ -23,16 +31,21 @@ public class GameManager : GenericSingleton<GameManager>
             spawnerActive = true;
         }
         
+        // Also check if any buses are on the path (using Spawner's reliable count first, but physical check is safer for "Empty" state)
         Bus[] activeBuses = FindObjectsByType<Bus>(FindObjectsSortMode.None);
-
-        if (allChars.Length == 0 && !spawnerActive && activeBuses.Length == 0)
+        // We want to verify no buses are *Active/Moving*.
+        
+        bool anyBusActive = activeBuses.Length > 0;
+        
+        // WIN CONDITION: No Chars, No Pending Buses, No Active Buses
+        if (allChars.Length == 0 && !spawnerActive && !anyBusActive)
         {
             Debug.Log("LEVEL COMPLETE!");
             if (UIManager.Instance != null) UIManager.Instance.ShowLevelComplete();
         }
-        else if (!spawnerActive && activeBuses.Length == 0)
+        // FAIL CONDITION: No Pending Buses, No Active Buses, But Chars REMAIN
+        else if (!spawnerActive && !anyBusActive && allChars.Length > 0)
         {
-            // No buses left, but people remain
             Debug.Log("LEVEL FAILED: People stranded!");
             if (UIManager.Instance != null) UIManager.Instance.ShowLevelFailed();
         }

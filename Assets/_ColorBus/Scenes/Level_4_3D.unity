@@ -166,6 +166,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2977404
 GameObject:
   m_ObjectHideFlags: 0
@@ -831,6 +833,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &44353504
 GameObject:
   m_ObjectHideFlags: 0
@@ -878,6 +882,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &52395787
 GameObject:
   m_ObjectHideFlags: 0
@@ -1447,6 +1453,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &121346281
 GameObject:
   m_ObjectHideFlags: 0
@@ -1900,6 +1908,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &136087091
 GameObject:
   m_ObjectHideFlags: 0
@@ -2385,6 +2395,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &163356136
 GameObject:
   m_ObjectHideFlags: 0
@@ -2983,6 +2995,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!21 &206982904
 Material:
   serializedVersion: 8
@@ -3697,6 +3711,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &262008556
 GameObject:
   m_ObjectHideFlags: 0
@@ -3775,6 +3791,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &267077639
 GameObject:
   m_ObjectHideFlags: 0
@@ -4028,6 +4046,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &290364359
 GameObject:
   m_ObjectHideFlags: 0
@@ -4249,6 +4269,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &297609910
 GameObject:
   m_ObjectHideFlags: 0
@@ -4805,6 +4827,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &327701266
 GameObject:
   m_ObjectHideFlags: 0
@@ -4884,6 +4908,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &338864553
 GameObject:
   m_ObjectHideFlags: 0
@@ -5403,6 +5429,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &351801179
 GameObject:
   m_ObjectHideFlags: 0
@@ -6176,6 +6204,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &422030321
 GameObject:
   m_ObjectHideFlags: 0
@@ -6581,6 +6611,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &458565163
 GameObject:
   m_ObjectHideFlags: 0
@@ -8194,6 +8226,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &549898807
 GameObject:
   m_ObjectHideFlags: 0
@@ -8786,6 +8820,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &580328881
 GameObject:
   m_ObjectHideFlags: 0
@@ -8833,6 +8869,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &585959781
 GameObject:
   m_ObjectHideFlags: 0
@@ -8990,6 +9028,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &598195092
 GameObject:
   m_ObjectHideFlags: 0
@@ -9037,6 +9077,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &601193023
 GameObject:
   m_ObjectHideFlags: 0
@@ -9602,6 +9644,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &651986364
 GameObject:
   m_ObjectHideFlags: 0
@@ -9869,6 +9913,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &666224968
 GameObject:
   m_ObjectHideFlags: 0
@@ -9948,6 +9994,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &670496819
 GameObject:
   m_ObjectHideFlags: 0
@@ -10123,6 +10171,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &681890242
 GameObject:
   m_ObjectHideFlags: 0
@@ -10453,6 +10503,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &688823001
 GameObject:
   m_ObjectHideFlags: 0
@@ -10918,6 +10970,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &708866332
 GameObject:
   m_ObjectHideFlags: 0
@@ -10997,6 +11051,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &714027756
 GameObject:
   m_ObjectHideFlags: 0
@@ -11324,6 +11380,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &746133923
 GameObject:
   m_ObjectHideFlags: 0
@@ -12203,6 +12261,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &802208819
 GameObject:
   m_ObjectHideFlags: 0
@@ -12630,6 +12690,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &827440104
 GameObject:
   m_ObjectHideFlags: 0
@@ -12819,6 +12881,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &832918780
 GameObject:
   m_ObjectHideFlags: 0
@@ -13008,6 +13072,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &837240125
 GameObject:
   m_ObjectHideFlags: 0
@@ -14412,6 +14478,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!21 &926312688
 Material:
   serializedVersion: 8
@@ -14975,6 +15043,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &954906427
 GameObject:
   m_ObjectHideFlags: 0
@@ -15285,6 +15355,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &972383403
 GameObject:
   m_ObjectHideFlags: 0
@@ -15332,6 +15404,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &975107955
 GameObject:
   m_ObjectHideFlags: 0
@@ -15411,6 +15485,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &978874575
 GameObject:
   m_ObjectHideFlags: 0
@@ -15568,6 +15644,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &981106957
 GameObject:
   m_ObjectHideFlags: 0
@@ -15615,6 +15693,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &982150894
 GameObject:
   m_ObjectHideFlags: 0
@@ -15662,6 +15742,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &984222190
 GameObject:
   m_ObjectHideFlags: 0
@@ -15851,6 +15933,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &995423338
 GameObject:
   m_ObjectHideFlags: 0
@@ -15898,6 +15982,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &997081073
 GameObject:
   m_ObjectHideFlags: 0
@@ -16389,6 +16475,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1032934067
 GameObject:
   m_ObjectHideFlags: 0
@@ -17274,6 +17362,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1079205846
 GameObject:
   m_ObjectHideFlags: 0
@@ -17321,6 +17411,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1081919274
 GameObject:
   m_ObjectHideFlags: 0
@@ -17489,6 +17581,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1087588379
 GameObject:
   m_ObjectHideFlags: 0
@@ -17536,6 +17630,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1089244844
 GameObject:
   m_ObjectHideFlags: 0
@@ -17583,6 +17679,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1089275235
 GameObject:
   m_ObjectHideFlags: 0
@@ -17759,6 +17857,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1098338247
 GameObject:
   m_ObjectHideFlags: 0
@@ -18102,6 +18202,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1118021079
 GameObject:
   m_ObjectHideFlags: 0
@@ -18355,6 +18457,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1133348125
 GameObject:
   m_ObjectHideFlags: 0
@@ -19123,6 +19227,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1186297255
 GameObject:
   m_ObjectHideFlags: 0
@@ -19422,6 +19528,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1203651780
 GameObject:
   m_ObjectHideFlags: 0
@@ -19469,6 +19577,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!21 &1204845666
 Material:
   serializedVersion: 8
@@ -19760,6 +19870,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1225548184
 GameObject:
   m_ObjectHideFlags: 0
@@ -20234,6 +20346,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1238559275
 GameObject:
   m_ObjectHideFlags: 0
@@ -20563,6 +20677,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1254772038
 GameObject:
   m_ObjectHideFlags: 0
@@ -20610,6 +20726,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1269651442
 GameObject:
   m_ObjectHideFlags: 0
@@ -20657,6 +20775,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1289639502
 GameObject:
   m_ObjectHideFlags: 0
@@ -20736,6 +20856,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1292003770
 GameObject:
   m_ObjectHideFlags: 0
@@ -20893,6 +21015,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1296318326
 GameObject:
   m_ObjectHideFlags: 0
@@ -21003,6 +21127,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1303425931
 GameObject:
   m_ObjectHideFlags: 0
@@ -21648,6 +21774,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1343873208
 GameObject:
   m_ObjectHideFlags: 0
@@ -21759,6 +21887,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1349876199
 GameObject:
   m_ObjectHideFlags: 0
@@ -21948,6 +22078,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1363057170
 GameObject:
   m_ObjectHideFlags: 0
@@ -22059,6 +22191,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1383257475
 GameObject:
   m_ObjectHideFlags: 0
@@ -22422,6 +22556,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1388259179
 GameObject:
   m_ObjectHideFlags: 0
@@ -22510,6 +22646,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1393416224
 GameObject:
   m_ObjectHideFlags: 0
@@ -22588,6 +22726,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1409439489
 GameObject:
   m_ObjectHideFlags: 0
@@ -22635,6 +22775,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1414527708
 GameObject:
   m_ObjectHideFlags: 0
@@ -22792,6 +22934,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1428388604
 GameObject:
   m_ObjectHideFlags: 0
@@ -22839,6 +22983,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1429034233
 GameObject:
   m_ObjectHideFlags: 0
@@ -22886,6 +23032,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1429060462
 GameObject:
   m_ObjectHideFlags: 0
@@ -22933,6 +23081,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1444289115
 GameObject:
   m_ObjectHideFlags: 0
@@ -22980,6 +23130,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1448223072
 GameObject:
   m_ObjectHideFlags: 0
@@ -23059,6 +23211,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1453880074
 GameObject:
   m_ObjectHideFlags: 0
@@ -23138,6 +23292,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1474411846
 GameObject:
   m_ObjectHideFlags: 0
@@ -23632,6 +23788,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1498318371
 GameObject:
   m_ObjectHideFlags: 0
@@ -23884,6 +24042,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1505935772
 GameObject:
   m_ObjectHideFlags: 0
@@ -24582,6 +24742,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1545976556
 GameObject:
   m_ObjectHideFlags: 0
@@ -24844,6 +25006,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1566830785
 GameObject:
   m_ObjectHideFlags: 0
@@ -25045,6 +25209,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1580865527
 GameObject:
   m_ObjectHideFlags: 0
@@ -25092,6 +25258,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1584915347
 GameObject:
   m_ObjectHideFlags: 0
@@ -25846,6 +26014,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1612053725
 GameObject:
   m_ObjectHideFlags: 0
@@ -25925,6 +26095,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1627566407
 GameObject:
   m_ObjectHideFlags: 0
@@ -26041,6 +26213,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1635839906
 GameObject:
   m_ObjectHideFlags: 0
@@ -26623,6 +26797,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1656319594
 GameObject:
   m_ObjectHideFlags: 0
@@ -26670,6 +26846,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!21 &1662967381
 Material:
   serializedVersion: 8
@@ -27059,6 +27237,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1677113783
 GameObject:
   m_ObjectHideFlags: 0
@@ -27138,6 +27318,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1681170018
 GameObject:
   m_ObjectHideFlags: 0
@@ -27185,6 +27367,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1682921085
 GameObject:
   m_ObjectHideFlags: 0
@@ -27573,6 +27757,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1715465099
 GameObject:
   m_ObjectHideFlags: 0
@@ -27767,6 +27953,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1723553806
 GameObject:
   m_ObjectHideFlags: 0
@@ -28356,7 +28544,7 @@ GameObject:
   - component: {fileID: 1746130526}
   - component: {fileID: 1746130525}
   m_Layer: 0
-  m_Name: Text (TMP)
+  m_Name: Active_BusCount
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28869,6 +29057,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1766860730
 GameObject:
   m_ObjectHideFlags: 0
@@ -29200,6 +29390,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1798278182
 GameObject:
   m_ObjectHideFlags: 0
@@ -29247,6 +29439,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1799370282
 GameObject:
   m_ObjectHideFlags: 0
@@ -29563,6 +29757,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1817434099
 GameObject:
   m_ObjectHideFlags: 0
@@ -29764,6 +29960,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1826810141
 GameObject:
   m_ObjectHideFlags: 0
@@ -29846,6 +30044,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1827173992
 GameObject:
   m_ObjectHideFlags: 0
@@ -30003,6 +30203,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1827448025
 GameObject:
   m_ObjectHideFlags: 0
@@ -30082,6 +30284,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1843072299
 GameObject:
   m_ObjectHideFlags: 0
@@ -30675,6 +30879,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!21 &1912327100
 Material:
   serializedVersion: 8
@@ -31734,6 +31940,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1938110698
 GameObject:
   m_ObjectHideFlags: 0
@@ -31845,6 +32053,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1941600662
 GameObject:
   m_ObjectHideFlags: 0
@@ -31970,6 +32180,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1952663882
 GameObject:
   m_ObjectHideFlags: 0
@@ -32017,6 +32229,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1961001028
 GameObject:
   m_ObjectHideFlags: 0
@@ -32424,6 +32638,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1986456211
 GameObject:
   m_ObjectHideFlags: 0
@@ -32471,6 +32687,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &1990418555
 GameObject:
   m_ObjectHideFlags: 0
@@ -33243,6 +33461,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2030554612
 GameObject:
   m_ObjectHideFlags: 0
@@ -33664,6 +33884,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2043958309
 GameObject:
   m_ObjectHideFlags: 0
@@ -33894,6 +34116,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 3
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2066809356
 GameObject:
   m_ObjectHideFlags: 0
@@ -34095,6 +34319,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2084225054
 GameObject:
   m_ObjectHideFlags: 0
@@ -34435,6 +34661,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2096074897
 GameObject:
   m_ObjectHideFlags: 0
@@ -34482,6 +34710,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2096577872
 GameObject:
   m_ObjectHideFlags: 0
@@ -34671,6 +34901,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2106159593
 GameObject:
   m_ObjectHideFlags: 0
@@ -35008,6 +35240,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2127696807
 GameObject:
   m_ObjectHideFlags: 0
@@ -35096,6 +35330,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2132501482
 GameObject:
   m_ObjectHideFlags: 0
@@ -35143,6 +35379,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 2
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2134842612
 GameObject:
   m_ObjectHideFlags: 0
@@ -35222,6 +35460,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterColor: 1
   _speed: 5
+  _jumpHeight: 0.3
+  _jumpSpeedMultiplier: 1.75
 --- !u!1 &2140257960
 GameObject:
   m_ObjectHideFlags: 0

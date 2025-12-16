@@ -38,12 +38,17 @@ public class BusSpawner : MonoBehaviour
     private bool _entryLocked = false;
     
     // Limits
-    private int _maxActiveBuses = 50; 
-    public int ActiveBusCount => waitingLocationOccupants != null ? 0 : 0; // Placeholder if needed
+    [SerializeField] private int _maxActiveBuses = 5; 
+    private int _currentOnPathBuses = 0;
+    public int ActiveBusCount => _currentOnPathBuses; 
 
     public bool RequestBusLaunch()
     {
-        // Simple check: allow launch if we aren't paused or something
+        if (_currentOnPathBuses >= _maxActiveBuses) return false;
+        
+        _currentOnPathBuses++;
+        if (UIManager.Instance != null) UIManager.Instance.UpdateBusCount(_currentOnPathBuses, _maxActiveBuses);
+        
         return true; 
     }
 
@@ -68,6 +73,9 @@ public class BusSpawner : MonoBehaviour
     {
         if (waitingSpots != null)
             waitingLocationOccupants = new Bus[waitingSpots.Length];
+
+        // Init UI
+        if (UIManager.Instance != null) UIManager.Instance.UpdateBusCount(_currentOnPathBuses, _maxActiveBuses);
 
         CalculateSchedule();
         StartCoroutine(SpawnBusRoutine());
@@ -246,6 +254,11 @@ public class BusSpawner : MonoBehaviour
 
     void HandleBusFullDeparture(Bus bus)
     {
+        _currentOnPathBuses--;
+        if (_currentOnPathBuses < 0) _currentOnPathBuses = 0;
+        
+        if (UIManager.Instance != null) UIManager.Instance.UpdateBusCount(_currentOnPathBuses, _maxActiveBuses);
+        
         GameManager.Instance.CheckLevelStatus(); 
     }
     

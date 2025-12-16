@@ -1,10 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class UIManager : GenericSingleton<UIManager>
 {
+    [Header("HUD")]
+    public TextMeshProUGUI activeBusCountText;
+
     [Header("Panels")]
     public GameObject levelCompletePanel;
     public GameObject levelFailedPanel;
@@ -34,6 +36,14 @@ public class UIManager : GenericSingleton<UIManager>
     {
         Debug.Log("UI: Showing Level Failed");
         if (levelFailedPanel != null) levelFailedPanel.SetActive(true);
+    }
+    
+    public void UpdateBusCount(int current, int max)
+    {
+        if (activeBusCountText != null)
+        {
+            activeBusCountText.text = $"{current} / {max}";
+        }
     }
 
     private void OnNextLevelClicked()
