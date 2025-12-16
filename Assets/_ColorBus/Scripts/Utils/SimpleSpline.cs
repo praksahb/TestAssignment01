@@ -71,4 +71,44 @@ public class SimpleSpline : MonoBehaviour
 
         return Vector3.Lerp(p0, p1, localT);
     }
+
+    public float GetClosestT(Vector3 position)
+    {
+        if (_waypoints == null || _waypoints.Count < 2) return 0f;
+
+        float bestT = 0f;
+        float minDstSqr = float.MaxValue;
+
+        int count = _waypoints.Count;
+        int numSegments = _loop ? count : count - 1;
+
+        for (int i = 0; i < numSegments; i++)
+        {
+            Vector3 p0 = _waypoints[i].position;
+            Vector3 p1 = _waypoints[(i + 1) % count].position;
+
+            Vector3 segmentDir = p1 - p0;
+            float segmentLenSqr = segmentDir.sqrMagnitude;
+            
+            float localT = 0f;
+            if (segmentLenSqr > 0.0001f)
+            {
+                // Project point onto line segment
+                Vector3 toPos = position - p0;
+                float dot = Vector3.Dot(toPos, segmentDir);
+                localT = Mathf.Clamp01(dot / segmentLenSqr);
+            }
+
+            Vector3 closestPoint = Vector3.Lerp(p0, p1, localT);
+            float dstSqr = (position - closestPoint).sqrMagnitude;
+
+            if (dstSqr < minDstSqr)
+            {
+                minDstSqr = dstSqr;
+                bestT = (i + localT) / numSegments;
+            }
+        }
+        
+        return bestT;
+    }
 }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider2D))]
+[RequireComponent(typeof(BoxCollider))]
 public class Node : MonoBehaviour
 {
     private void Reset()

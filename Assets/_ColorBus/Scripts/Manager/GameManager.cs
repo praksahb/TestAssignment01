@@ -4,9 +4,7 @@ using UnityEngine;
 
 public class GameManager : GenericSingleton<GameManager>
 {
-    [UnityEngine.Serialization.FormerlySerializedAs("debugSpawnSequence")]
-    [SerializeField] private CharacterColor[] _debugSpawnSequence; // Just for reference if needed
-    public CharacterColor[] DebugSpawnSequence => _debugSpawnSequence;
+    [SerializeField] private CharacterColor[] debugSpawnSequence; // Just for reference if needed
 
     private void Start()
     {

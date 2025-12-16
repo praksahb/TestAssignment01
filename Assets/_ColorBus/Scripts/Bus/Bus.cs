@@ -23,12 +23,12 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     public List<Character> Passengers => _passengers;
 
     [UnityEngine.Serialization.FormerlySerializedAs("seatPositions")]
-    [SerializeField] private Transform[] _seatPositions; // Restored
+    [SerializeField] private Transform[] _seatPositions; 
     public Transform[] SeatPositions => _seatPositions;
     
     [Header("Visuals")]
     [UnityEngine.Serialization.FormerlySerializedAs("busRenderer")]
-    [SerializeField] private Renderer _busRenderer; // Inspector Reference
+    [SerializeField] private Renderer _busRenderer; 
     public Renderer BusRenderer => _busRenderer;
     
     [Header("Path Settings")]
@@ -37,62 +37,47 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     public SimpleSpline CurrentPath { get => _currentPath; set => _currentPath = value; }
 
     [UnityEngine.Serialization.FormerlySerializedAs("exitPoint")]
-    [SerializeField] private Transform _exitPoint; // Point to drive to when full
+    [SerializeField] private Transform _exitPoint; 
     public Transform ExitPoint { get => _exitPoint; set => _exitPoint = value; }
 
     [SerializeField] private float _forwardCheckDistance = 1.25f;
     [SerializeField] private float _detectionRadius = .75f;
 
+    // State Fields (Underscore naming)
     private bool _isMoving = false;
     private bool _tapToStart = false;
     private float _currentT = 0f;
     private bool _isExiting = false;
     private bool _isLoadingPassengers = false;
+    private bool _isTransformMoving = false; 
 
     public System.Action<Bus> OnBusDeparted;
-    public System.Action<Bus> OnLeaveQueue; // New event for when bus leaves the waiting spot
+    public System.Action<Bus> OnLeaveQueue; 
     
     private int _queueIndex = -1;
     [SerializeField] private bool _isInQueue = false;
 
-    public bool IsInQueue => _isInQueue; // Expose for checks
-    public bool IsDeparting => _tapToStart; // True if tapped/launching but maybe still waiting to enter path
+    // Priority Properties
+    public bool IsInQueue => _isInQueue; 
+    public bool IsDeparting => _tapToStart; 
+    public bool IsMoving => _isMoving || _isTransformMoving; 
+    public bool IsOnPath => _isMoving; // Higher priority (Main loop)
 
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        Debug.Log("OnPointerDown Event Received!");
-        TryLaunchBus();
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        Debug.Log("OnPointerClick Event Received!");
-        TryLaunchBus();
-    }
-
-    // Fallback for direct Unity Input without Raycaster
-    private void OnMouseDown()
-    {
-        Debug.Log("OnMouseDown Event Received!");
-        TryLaunchBus();
-    }
+    public void OnPointerDown(PointerEventData eventData) => TryLaunchBus();
+    public void OnPointerClick(PointerEventData eventData) => TryLaunchBus();
+    private void OnMouseDown() => TryLaunchBus(); // Fallback
 
     private void TryLaunchBus()
     {
-        if (_tapToStart) return; // Prevent double taps
+        if (_tapToStart) return; 
 
         if (_isInQueue && _queueIndex <= 1)
         {
-            // Check Limits
-            if (BusSpawner.Instance != null)
+            if (BusSpawner.Instance != null && !BusSpawner.Instance.RequestBusLaunch())
             {
-                if (!BusSpawner.Instance.RequestBusLaunch())
-                {
-                    Debug.Log("Bus Tap Ignored: Max Active Buses Reached.");
-                    return;
-                }
+                Debug.Log("Bus Tap Ignored: Max Active Buses Reached.");
+                return;
             }
-
             Debug.Log("Bus Tap Received. Queuing start...");
             _tapToStart = true;
         }
@@ -106,41 +91,25 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         _queueIndex = index;
         _isInQueue = true;
         
-        // Visual Tint
         if (_busRenderer == null) _busRenderer = GetComponentInChildren<Renderer>();
-        if (_busRenderer != null)
-        {
-            _busRenderer.material.color = GetColorValue(busColor);
-        }
+        if (_busRenderer != null) _busRenderer.material.color = GetColorValue(busColor);
         
-        // Spawn Logic: 
-        // Enters from "Below" (-Z) and moves UP to the spot (+Z direction relative to spawn).
-        // User requested Y Rotation 180 (Facing Camera/Down).
         Vector3 startOffset = new Vector3(0, 0, 10f); 
         transform.position = spawnSpot.position + startOffset;
-        
-        // Force Rotation 180
         transform.rotation = Quaternion.Euler(0, 180, 0); 
         
-        // Move to Spot WITHOUT rotating (Keep facing 180)
         StartCoroutine(QueueEntryRoutine(spawnSpot.position));
     }
     
     public void UpdateQueuePosition(Transform newSpot, int newIndex)
     {
         _queueIndex = newIndex;
-        // Slide to next spot, keeping rotation (180)
         StartCoroutine(MoveToQueueSpot(newSpot.position));
     }
 
     [Header("Animation Settings")]
-    [UnityEngine.Serialization.FormerlySerializedAs("spawnEntryDuration")]
     [SerializeField] private float _spawnEntryDuration = 1.5f;
-    public float SpawnEntryDuration => _spawnEntryDuration;
-
-    [UnityEngine.Serialization.FormerlySerializedAs("queueShiftDuration")]
     [SerializeField] private float _queueShiftDuration = 0.5f;
-    public float QueueShiftDuration => _queueShiftDuration;
 
     private UnityEngine.Color GetColorValue(CharacterColor type)
     {
@@ -167,6 +136,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     
     private IEnumerator MoveToPosition(Vector3 target, float duration, bool lookAtTarget = true, bool checkCollisions = false)
     {
+        _isTransformMoving = true;
         Vector3 start = transform.position;
         Quaternion startRot = transform.rotation;
         
@@ -180,127 +150,96 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            // Collision Check pausing
             if (checkCollisions && IsPathBlocked())
             {
                 yield return null;
-                continue; // Skip incrementing elapsed this frame
+                continue; 
             }
 
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
             transform.position = Vector3.Lerp(start, target, t);
-            if (lookAtTarget)
-            {
-               transform.rotation = Quaternion.Slerp(startRot, targetRot, t * 5f);
-            }
+            if (lookAtTarget) transform.rotation = Quaternion.Slerp(startRot, targetRot, t * 5f);
+            
             yield return null;
         }
         transform.position = target;
         if (lookAtTarget) transform.rotation = targetRot;
+        _isTransformMoving = false;
     }
 
     // MAIN LOOP
     private IEnumerator LifeCycleRoutine()
     {
-        // 1. Wait for Tap
-        while (!_tapToStart)
-        {
-            yield return null;
-        }
+        while (!_tapToStart) yield return null;
 
-        // 2. Wait for Clear Path (Front check)
-        while (IsPathBlocked())
-        {
-            yield return new WaitForSeconds(0.2f);
-        }
+        while (IsPathBlocked()) yield return new WaitForSeconds(0.2f);
         
         if (_currentPath == null)
         {
-            Debug.LogError("Bus: Cannot start moving, CurrentPath is NULL! Assign LevelPath in BusSpawner.");
+            Debug.LogError("Bus: Path NULL!");
             yield break;
         }
         
-        // 3. Move to Spline Start
-        // We assume the Spline starts near the front waiting spot. 
-        // We just snap/lerp to T=0.
-        // 3. Move to Spline Start
-        // We assume the Spline starts near the front waiting spot. 
-        // We just snap/lerp to T=0.
-        
-        // Pass true for checkCollisions to avoid partial overlap during entry
+        // ACQUIRE LOCK (Entry Merge)
+        if (BusSpawner.Instance != null)
+        {
+            while (!BusSpawner.Instance.TryLockEntry()) yield return new WaitForSeconds(0.1f);
+        }
+
         yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(0), 0.5f, true, true));
 
+        // RELEASE LOCK
+        if (BusSpawner.Instance != null) BusSpawner.Instance.UnlockEntry();
+
         _isInQueue = false;
-        OnLeaveQueue?.Invoke(this); // Notify Manager to advance queue, NOW that we have left.
+        OnLeaveQueue?.Invoke(this); 
         
-        // 4. Follow Path Loop
+        // Loop
         _isMoving = true;
         while (_isMoving)
         {
-            // Drive
             LoopOnPath();
             yield return null;
         }
         
-        // 5. Exit (Handled in LoopOnPath logic when full/end)
-        // Cleanup
+        if (_isExiting) yield return StartCoroutine(DriveToExitRoutine());
+
         OnBusDeparted?.Invoke(this);
         Destroy(gameObject);
     }
-
+    
     private void LoopOnPath()
     {
         if (_isLoadingPassengers) return;
         
-        // Dynamic Obstacle Check (Collision Avoidance)
-        if (IsPathBlocked())
-        {
-            return; // Brake/Wait
-        }
+        if (IsPathBlocked()) return; // Brake
 
         // Move T
-        // Calculate speed relative to path length? 
-        // For SimpleSpline, T is 0..1. 
-        // Distance approx = Speed * DT. 
-        // T_delta = Distance / TotalLength. 
-        // Let's assume a fixed increment for now or estimate length.
-        float pathLengthApprox = 50f; // Mock length
+        float pathLengthApprox = 50f; 
         float tIncrement = (_speed * Time.deltaTime) / pathLengthApprox;
         
         _currentT += tIncrement;
-        if (_currentT > 1.0f) _currentT = 0f; // Loop
+        if (_currentT > 1.0f) _currentT = 0f; 
         
         Vector3 pos = _currentPath.GetPointOnPath(_currentT);
-        
-        // Rotation: Look at next point
         Vector3 nextPos = _currentPath.GetPointOnPath(_currentT + 0.01f);
         Vector3 dir = (nextPos - pos).normalized;
-        if (dir != Vector3.zero)
-        {
-             transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
-        }
+        if (dir != Vector3.zero) transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
         
         transform.position = pos;
         
-        // Check for Stops
         CheckForStopNode();
         
-        // Exit Condition: If Full and near exit? 
-        // Or if Full and loop completed X times?
-        // Let's say: If Full, we detach from Spline and move to ExitPoint
-        if (_passengers.Count >= _capacity && _currentT > 0.8f) // Near end of loop
+        if (_passengers.Count >= _capacity && _currentT > 0.8f) 
         {
-            // Break loop and drive to exit
             _isMoving = false;
-            StartCoroutine(DriveToExitRoutine());
+            _isExiting = true; 
         }
     }
 
     private void CheckForStopNode()
     {
-        // Check for Nodes with characters of my Color
-        // Using 3D Physics Overlap
         Collider[] limits = Physics.OverlapSphere(transform.position, _detectionRadius); 
         foreach (var hit in limits)
         {
@@ -309,16 +248,11 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             {
                 if (_passengers.Count < _capacity && node.HasCharacter(this._busColor))
                 {
-                    // Check Stop Point proximity
                     if (node.StopPoint != null)
                     {
                         float dist = Vector3.Distance(transform.position, node.StopPoint.position);
-                        if (dist > 0.5f) // Keep driving until close
-                        {
-                             continue; 
-                        }
+                        if (dist > 0.5f) continue; 
                     }
-                    
                     StartCoroutine(StopAndLoadRoutine(node));
                     break; 
                 }
@@ -329,17 +263,9 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private IEnumerator StopAndLoadRoutine(Node node)
     {
         _isLoadingPassengers = true; 
-        
-        // 1. Move to Stop Point (Fine adjustment)
-        if (node.StopPoint != null)
-        {
-            yield return StartCoroutine(MoveToPosition(node.StopPoint.position, 0.5f)); 
-        }
-        
-        // 2. Load Passengers
+        if (node.StopPoint != null) yield return StartCoroutine(MoveToPosition(node.StopPoint.position, 0.5f)); 
         yield return StartCoroutine(LoadPassengersRoutine(node));
-        
-        // 3. Resume
+        if (_currentPath != null) _currentT = _currentPath.GetClosestT(transform.position);
         _isLoadingPassengers = false;
     }
 
@@ -351,84 +277,77 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             if (c != null)
             {
                 _passengers.Add(c);
-                // Animate Character to Seat
                 int seatIdx = _passengers.Count - 1;
-                Transform seat = transform; // Fallback
+                Transform seat = transform; 
                 if (seatIdx < _seatPositions.Length && _seatPositions[seatIdx] != null) seat = _seatPositions[seatIdx];
 
                 c.MoveToBus(seat, this);
+                
+                float timeout = 3.0f;
+                while (c != null && Vector3.Distance(c.transform.position, seat.position) > 0.2f && timeout > 0f)
+                {
+                     timeout -= Time.deltaTime;
+                     yield return null;
+                }
             }
-            yield return new WaitForSeconds(0.2f); // Load speed
         }
-        yield return new WaitForSeconds(0.5f); // Wait a bit before leaving
+        yield return new WaitForSeconds(0.5f); 
     }
     
-    // Front Collision Check
-    // Front Collision Check
-    // Front Collision Check
     private bool IsPathBlocked()
     {
-        // Cast ray forward
-        // In 3D, forward is transform.forward
-        // Ignore Triggers (Nodes) so we don't get blocked by them and miss the bus behind them.
-        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, _forwardCheckDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        float boxLen = _forwardCheckDistance;
+        float boxWidth = 1.5f; 
+        Vector3 center = transform.position + (transform.forward * (boxLen * 0.5f)) + (Vector3.up * 0.5f);
+        Vector3 halfExtents = new Vector3(boxWidth * 0.5f, 1.0f, boxLen * 0.5f);
+        
+        Collider[] hits = Physics.OverlapBox(center, halfExtents, transform.rotation, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+        
+        foreach (var hit in hits)
         {
-            // Use GetComponentInParent in case we hit a child collider (wheels, body mesh)
-            Bus otherBus = hit.collider.GetComponentInParent<Bus>();
-            // Check if it is valid, not me, and [NOT in queue OR IS Departing]
-            // We want to stop for ANY bus on the road, OR any bus in the queue that is trying to leave.
-            // We only ignore buses that are Parked (InQueue AND !IsDeparting).
-            if (otherBus != null && otherBus != this && (!otherBus.IsInQueue || otherBus.IsDeparting)) 
+            Bus otherBus = hit.GetComponentInParent<Bus>();
+            if (otherBus != null && otherBus != this)
             {
-                Debug.DrawLine(transform.position, hit.point, Color.red);
-                // Debug.Log($"Bus {name} Blocked by {otherBus.name}. InQueue: {otherBus.IsInQueue}, Departing: {otherBus.IsDeparting}");
-                return true;
+                // PRIORITY LOGIC:
+                // If I am ON THE PATH (_isMoving), I have right of way over buses that are DEPARTING/ENTERING.
+                if (this._isMoving && !otherBus._isMoving && otherBus.IsDeparting) continue; 
+
+                 if (!otherBus.IsInQueue || otherBus.IsDeparting) return true;
             }
         }
         return false;
     }
 
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        float boxLen = _forwardCheckDistance;
+        float boxWidth = 1.5f;
+        Vector3 center = transform.position + (transform.forward * (boxLen * 0.5f)) + (Vector3.up * 0.5f);
+        Vector3 size = new Vector3(boxWidth, 2.0f, boxLen);
+        
+        Matrix4x4 old = Gizmos.matrix;
+        Gizmos.matrix = Matrix4x4.TRS(center, transform.rotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, size);
+        Gizmos.matrix = old;
+        
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+    }
+
     private IEnumerator DriveToExitRoutine()
     {
-        // Simple move to exit point
         if (_exitPoint != null)
         {
             while (Vector3.Distance(transform.position, _exitPoint.position) > 0.5f)
             {
-                // Move towards exit
                 transform.position = Vector3.MoveTowards(transform.position, _exitPoint.position, _speed * Time.deltaTime);
-                
-                // Rot
                 Vector3 dir = (_exitPoint.position - transform.position).normalized;
                 if(dir != Vector3.zero) transform.rotation = Quaternion.LookRotation(dir);
-                
                 yield return null;
             }
         }
-        
-        // Done
         OnBusDeparted?.Invoke(this);
         Destroy(gameObject);
-    }
-
-    // Debug Gizmos
-    // Debug Gizmos
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        // Check forward
-        Gizmos.DrawLine(transform.position, transform.position + transform.forward * _forwardCheckDistance);
-        
-        // Detection Radius
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, _detectionRadius);
-
-        // Entry point visualization if enabled
-        if (_currentPath != null)
-        {
-            Gizmos.color = Color.cyan;
-            // GetPointOnPath(0) is the start
-            Gizmos.DrawWireSphere(_currentPath.GetPointOnPath(0f), 0.5f);
-        }
     }
 }
