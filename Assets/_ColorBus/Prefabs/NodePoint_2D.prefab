@@ -41,7 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6101979369498996058}
   - component: {fileID: 7589379471307433373}
-  - component: {fileID: 2074530217380666819}
+  - component: {fileID: 1093436975884527216}
   m_Layer: 0
   m_Name: NodePoint_2D
   m_TagString: Untagged
@@ -77,29 +77,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f8ec80e66d9052439fdff23fa1e87bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  batches: []
-  queueDirection: 1
-  rows: 5
-  cols: 2
-  batchSpacing: 1
-  spacingX: 0.15
-  spacingY: 0.25
-  nextNodes: []
-  currentPathIndex: 0
-  characterSlots: []
-  testCharacterPrefab: {fileID: 4945358149633007882, guid: ddf43c2de42ccf04cb209dec8a6c4593, type: 3}
-  stopPoint: {fileID: 1897258209609489158}
-  batchConfig: 
---- !u!61 &2074530217380666819
-BoxCollider2D:
+  _batches: []
+  _queueDirection: 1
+  _cols: 2
+  _batchSpacing: 1
+  _spacingX: 0.15
+  _spacingZ: 0.8
+  _nextNodes: []
+  _currentPathIndex: 0
+  _characterSlots: []
+  _testCharacterPrefab: {fileID: 4945358149633007882, guid: ddf43c2de42ccf04cb209dec8a6c4593, type: 3}
+  _stopPoint: {fileID: 1897258209609489158}
+  _batchConfig: []
+--- !u!65 &1093436975884527216
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6981732980274827436}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -108,31 +104,9 @@ BoxCollider2D:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
   m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
-    oldSize: {x: 0, y: 0}
-    newSize: {x: 0, y: 0}
-    adaptiveTilingThreshold: 0
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}

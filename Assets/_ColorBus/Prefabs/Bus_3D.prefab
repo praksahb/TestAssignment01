@@ -322,7 +322,7 @@ Transform:
   m_GameObject: {fileID: 3271841809246787214}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.007, y: 0.088, z: -0.265}
+  m_LocalPosition: {x: 0.0051, y: 0.088, z: -0.1897}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -914,8 +914,8 @@ MonoBehaviour:
   _busRenderer: {fileID: 6954067467611009003}
   _currentPath: {fileID: 0}
   _exitPoint: {fileID: 0}
-  _forwardCheckDistance: 1
-  _detectionRadius: 1
+  _collisionCheckDistance: 0.75
+  _nodeDetectionRadius: 0.75
   _isInQueue: 0
   _spawnEntryDuration: 2
   _queueShiftDuration: 0.5

@@ -21,6 +21,10 @@ public class Character : MonoBehaviour
     [SerializeField] private float _speed = 5.0f;
     public float Speed => _speed;
 
+    [Header("Jump Settings")]
+    [SerializeField] private float _jumpHeight = 0.3f;
+    [SerializeField] private float _jumpSpeedMultiplier = 1.75f;
+
     private Renderer _myRenderer;
 
     private void Awake()
@@ -38,15 +42,20 @@ public class Character : MonoBehaviour
         SetColor(_characterColor);
     }
 
+    private MaterialPropertyBlock _propBlock;
+
     public void SetColor(CharacterColor c)
     {
         _characterColor = c;
         // visual update
+        if (_myRenderer == null) _myRenderer = GetComponentInChildren<Renderer>();
         if (_myRenderer != null)
         {
-            // Assuming the shader has a standard Color property (BaseColor or _Color)
-            // For standard material:
-            _myRenderer.material.color = GetColorFromEnum(c);
+            if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
+            
+            _myRenderer.GetPropertyBlock(_propBlock);
+            _propBlock.SetColor("_BaseColor", GetColorFromEnum(c)); // Assuming standard shader uses _Color
+            _myRenderer.SetPropertyBlock(_propBlock);
         }
     }
     
@@ -69,19 +78,47 @@ public class Character : MonoBehaviour
     
     private IEnumerator MoveToBusRoutine(Transform targetSeat, Bus bus)
     {
-        // 1. Move to Entry point (optional, but good for visuals)
-        // 2. Move to Seat
+        // 1. Jump Parabola to Seat
+        Vector3 startPos = transform.position;
+        // Dynamic duration to match original movement speed
+        float dist = Vector3.Distance(startPos, targetSeat.position);
         
-        while (Vector3.Distance(transform.position, targetSeat.position) > 0.1f)
+        // Speed up the boarding significantly to make it snappy
+        float effectiveSpeed = _speed * _jumpSpeedMultiplier; 
+        float duration = dist / effectiveSpeed; 
+        
+        // Minimal safety floor
+        if (duration < 0.05f) duration = 0.05f;
+
+        float elapsed = 0f;
+        // float jumpHeight = 0.3f; // Use _jumpHeight field
+
+        while (elapsed < duration)
         {
-            transform.position = Vector3.MoveTowards(transform.position, targetSeat.position, _speed * Time.deltaTime);
+            if (targetSeat == null) yield break; // Safety check
+
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            
+            // Linear progress
+            Vector3 linearPos = Vector3.Lerp(startPos, targetSeat.position, t);
+            
+            // Add Arc (Sin wave 0->1->0)
+            float height = Mathf.Sin(t * Mathf.PI) * _jumpHeight;
+            
+            transform.position = linearPos + Vector3.up * height;
+            
+            // Optional: Rotate towards bus?
+            transform.LookAt(targetSeat);
+            
             yield return null;
         }
         
-        transform.position = targetSeat.position;
-        transform.SetParent(targetSeat);
-        
-        // Notify Bus we arrived? Or Bus handles it? 
-        // Bus handles visual counting usually.
+        if (targetSeat != null)
+        {
+            transform.position = targetSeat.position;
+            transform.SetParent(targetSeat);
+            transform.localRotation = Quaternion.identity; // Align with seat
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,10 +41,6 @@ public class Node : MonoBehaviour
     [SerializeField] private QueueDirection _queueDirection = QueueDirection.Vertical;
     public QueueDirection Direction => _queueDirection;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("rows")]
-    [SerializeField] private int _rows = 5; // Depth of the batch (how many char rows per batch)
-    public int Rows => _rows;
-
     [UnityEngine.Serialization.FormerlySerializedAs("cols")]
     [SerializeField] private int _cols = 2; // Width of the batch (how many columns wide)
     public int Cols => _cols;
@@ -84,10 +81,17 @@ public class Node : MonoBehaviour
     [SerializeField] private Transform _stopPoint; // Where the bus should actually stop
     public Transform StopPoint => _stopPoint;
 
+    [System.Serializable]
+    public struct BatchSetup
+    {
+        public CharacterColor color;
+        public int count;
+    }
+
     [Header("Level Configuration")]
     [UnityEngine.Serialization.FormerlySerializedAs("batchConfig")]
-    [SerializeField] private List<CharacterColor> _batchConfig = new List<CharacterColor>(); // Define the sequence here
-    public List<CharacterColor> BatchConfig => _batchConfig;
+    [SerializeField] private List<BatchSetup> _batchConfig = new List<BatchSetup>(); // Define the sequence here
+    public List<BatchSetup> BatchConfig => _batchConfig;
 
     // Switch Mechanic
     public void TogglePath()
@@ -155,9 +159,13 @@ public class Node : MonoBehaviour
             if (!frontBatch.IsEmpty && frontBatch.BatchColor == color)
             {
                 // Return first char and remove it
-                Character c = frontBatch.CharList[0];
-                RemoveCharacter(c);
-                return c;
+            Character c = frontBatch.CharList[0];
+            
+            // Critical Fix: Unparent so it doesn't get destroyed if Batch object is destroyed
+            c.transform.SetParent(null); 
+            
+            RemoveCharacter(c);
+            return c;
             }
         }
         return null;
@@ -196,42 +204,64 @@ public class Node : MonoBehaviour
         UpdateBatchPositions();
     }
     
+    // Simplified UpdateBatchPositions - We need to recalculate? 
+    // Actually, UpdateBatchPositions was based on index * fixed size.
+    // If we want runtime updates (removing batches), we need to shift them back.
+    // This is tricky if sizes vary. We need to know the size of EACH batch to know where it sits.
     private void UpdateBatchPositions()
     {
+        float currentOffset = 0f;
         for (int i = 0; i < _batches.Count; i++)
         {
             CharacterBatch batch = _batches[i];
-            Vector3 targetPos = GetBatchPosition(i);
             
+            // Calculate size of this batch
+            int count = batch.CharList.Count; 
+            if(count == 0) count = 1; // avoid infinite collapse?
+            // Note: CharList might diminish as they enter bus? 
+            // Ideally we track "Initial Count" or "Rows Occupied".
+            // Since we destroy the BatchObj when empty, it's fine.
+            // But wait, if chars leave, count drops. Do we want the batch to shrink visually? 
+            // Usually no, the "container" size stays.
+            // For now, let's assume size stays fixed until batch is gone?
+            // Actually, we can just grab the existing localPosition of slots to guess size? Hard.
+            
+            // BETTER: Since we removed _rows field, we must rely on CharList count to estimate size OR store it in Batch.
+            // Let's assume we stack them based on current count.
+            int rowsNeeded = Mathf.CeilToInt((float)count / _cols);
+            
+            Vector3 targetPos;
+             if (_queueDirection == QueueDirection.Vertical) 
+                targetPos = new Vector3(0, 0, currentOffset);
+            else 
+                targetPos = new Vector3(-currentOffset, 0, 0);
+
             if (batch.BatchRoot != null)
             {
-                batch.BatchRoot.localPosition = targetPos; 
+                // batch.BatchRoot.localPosition = targetPos; // Old Snap
+                StartCoroutine(MoveBatchTo(batch.BatchRoot, targetPos)); // New Smooth Slide
             }
+            
+            float usedSpace = rowsNeeded * ((_queueDirection == QueueDirection.Vertical) ? _spacingZ : _spacingX);
+            currentOffset += usedSpace + _batchSpacing;
         }
     }
     
-    private Vector3 GetBatchPosition(int index)
+    private IEnumerator MoveBatchTo(Transform batchRoot, Vector3 localTarget)
     {
-        // Batch 0 is at (0,0,0).
-        // Subsequent batches are "Behind" based on direction.
+        float duration = 0.3f;
+        float elapsed = 0f;
+        Vector3 startPos = batchRoot.localPosition;
         
-        // Assumption: 
-        // Vertical Queue flows UP -> Batches stack DOWN (-Y).
-        // Horizontal Queue flows LEFT -> Batches stack RIGHT (+X) or Left? 
-        // Looking at the image, the horizontal queue flows LEFT (into the bus). So batches accept from Right. 
-        // So batches stack to the Right (+X).
-        
-        float offset = index * _batchSpacing;
-        
-        switch (_queueDirection)
+        while (elapsed < duration)
         {
-            case QueueDirection.Vertical:
-                return new Vector3(0, -offset, 0);
-            case QueueDirection.Horizontal:
-                return new Vector3(offset, 0, 0); // Stacking to Right
-            default:
-                return new Vector3(0, -offset, 0);
+            if (batchRoot == null) yield break;
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            batchRoot.localPosition = Vector3.Lerp(startPos, localTarget, t);
+            yield return null;
         }
+        if(batchRoot != null) batchRoot.localPosition = localTarget;
     }
     
     // --- GENERATION TOOLS ---
@@ -253,69 +283,89 @@ public class Node : MonoBehaviour
         // Use Config if available, else Default
         if (_batchConfig != null && _batchConfig.Count > 0)
         {
+            float currentOffset = 0f;
+
             for (int i = 0; i < _batchConfig.Count; i++)
             {
-                CreateBatch(i, _batchConfig[i]);
+                currentOffset = CreateBatchDynamic(i, _batchConfig[i], currentOffset);
             }
         }
         else
         {
             // Default Test
-            CreateBatch(0, CharacterColor.Red);
-            CreateBatch(1, CharacterColor.Green);
-            CreateBatch(2, CharacterColor.Blue);
+            float currentOffset = 0f;
+            currentOffset = CreateBatchDynamic(0, new BatchSetup { color = CharacterColor.Red, count = 6 }, currentOffset);
+            currentOffset = CreateBatchDynamic(1, new BatchSetup { color = CharacterColor.Green, count = 4 }, currentOffset);
+            currentOffset = CreateBatchDynamic(2, new BatchSetup { color = CharacterColor.Blue, count = 5 }, currentOffset);
         }
     }
     
-    private void CreateBatch(int index, CharacterColor cColor)
+    private float CreateBatchDynamic(int index, BatchSetup setup, float startOffset)
     {
         CharacterBatch batch = new CharacterBatch();
-        batch.BatchColor = cColor;
+        batch.BatchColor = setup.color;
         
-        GameObject batchObj = new GameObject($"Batch_{index}_{cColor}");
+        GameObject batchObj = new GameObject($"Batch_{index}_{setup.color}");
         batchObj.transform.SetParent(transform);
-        batchObj.transform.localPosition = GetBatchPosition(index);
+        
+        // Position Root based on Start Offset
+        Vector3 batchRootPos = Vector3.zero;
+        if (_queueDirection == QueueDirection.Vertical) 
+            batchRootPos = new Vector3(0, 0, startOffset); // Z-Axis
+        else 
+            batchRootPos = new Vector3(-startOffset, 0, 0); // X-Axis (Inverted)
+
+        batchObj.transform.localPosition = batchRootPos;
         batchObj.transform.localRotation = Quaternion.identity;
         
         batch.BatchRoot = batchObj.transform;
         
-        // Create Slots
-        for (int r = 0; r < _rows; r++)
+        // Calculate Rows needed
+        int count = setup.count > 0 ? setup.count : 4; // Default safety
+        int rowsNeeded = Mathf.CeilToInt((float)count / _cols);
+        
+        for (int i = 0; i < count; i++)
         {
-            for (int c = 0; c < _cols; c++)
+            int r = i / _cols; // Row index
+            int c = i % _cols; // Col index
+            
+            GameObject slot = new GameObject($"Slot_{r}_{c}");
+            slot.transform.SetParent(batchObj.transform);
+            
+            Vector3 slotPos = Vector3.zero;
+            
+            if (_queueDirection == QueueDirection.Vertical)
             {
-                GameObject slot = new GameObject($"Slot_{r}_{c}");
-                slot.transform.SetParent(batchObj.transform);
-                
-                Vector3 slotPos = Vector3.zero;
-                
-                if (_queueDirection == QueueDirection.Vertical)
-                {
-                    // Vertical Queue (Flows Up):
-                    // Rows go Backwards (-Y) -> Now (-Z)
-                    // Cols go Sideways (X) centered
-                    float xPos = (c - (_cols - 1) * 0.5f) * _spacingX;
-                    float zPos = -(r * _spacingZ); 
-                    slotPos = new Vector3(xPos, 0, zPos);
-                }
-                else
-                {
-                    // Horizontal Queue (Flows Left):
-                    float xPos = (r * _spacingX); // Extending Right
-                    float zPos = (c - (_cols - 1) * 0.5f) * _spacingZ;
-                    slotPos = new Vector3(xPos, 0, zPos);
-                }
-                
-                slot.transform.localPosition = slotPos;
-                slot.transform.localRotation = Quaternion.identity;
-                
-                // Spawn
-                Character newChar = SpawnCharacterAt(slot.transform, cColor);
-                batch.CharList.Add(newChar);
+                // Vertical Queue: Fills +Z
+                float xPos = (c - (_cols - 1) * 0.5f) * _spacingX;
+                float zPos = r * _spacingZ; 
+                slotPos = new Vector3(xPos, 0, zPos);
             }
+            else
+            {
+                // Horizontal Queue: Fills -X
+                float xPos = -(r * _spacingX); 
+                float zPos = (c - (_cols - 1) * 0.5f) * _spacingZ;
+                slotPos = new Vector3(xPos, 0, zPos);
+            }
+            
+            slot.transform.localPosition = slotPos;
+            slot.transform.localRotation = Quaternion.identity;
+            
+            Character newChar = SpawnCharacterAt(slot.transform, setup.color);
+            batch.CharList.Add(newChar);
         }
         
         _batches.Add(batch);
+        
+        // Return next offset
+        float usedSpace = (rowsNeeded * ((_queueDirection == QueueDirection.Vertical) ? _spacingZ : _spacingX));
+        // Add Batch Spacing
+        // Note: For horizontal using SpacingX is safer contextually, but SpacingX is declared as 'width' between cols usually?
+        // Wait, _spacingX is typically lateral spacing. But in Horizontal mode, Rows EXTEND along X. So we use spacingX for row separation?
+        // Let's re-read line 304 in previous code: `float xPos = (r * _spacingX);` -> Yes, X spacing handles row depth in horizontal.
+        
+        return startOffset + usedSpace + _batchSpacing;
     }
     
     private Character SpawnCharacterAt(Transform slot, CharacterColor cType)

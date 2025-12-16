@@ -23,6 +23,11 @@ public class BusSpawner : MonoBehaviour
     // User Update: "bus count should be equivalent to total number... divided by capacity"
     public List<CharacterColor> spawnSequencePrototype; 
 
+    [Header("Debug Settings")]
+    [SerializeField] private bool _debugMode = false;
+    [SerializeField] private int _debugSpawnCount = 10;
+    [SerializeField] private List<CharacterColor> _debugSpawnSequence;
+
     private Queue<CharacterColor> busQueue = new Queue<CharacterColor>();
     private Bus[] waitingLocationOccupants;
     private int busCapacity;
@@ -73,6 +78,27 @@ public class BusSpawner : MonoBehaviour
     {
         busQueue.Clear();
         
+        if (_debugMode)
+        {
+            Debug.Log($"BusSpawner: Generating Debug Schedule for {_debugSpawnCount} buses.");
+            for (int i = 0; i < _debugSpawnCount; i++)
+            {
+                CharacterColor c = CharacterColor.Red;
+                if (_debugSpawnSequence != null && _debugSpawnSequence.Count > 0)
+                {
+                    c = _debugSpawnSequence[i % _debugSpawnSequence.Count];
+                }
+                else
+                {
+                    // Fallback to random if no sequence provided
+                    // We cast to int, assuming Red=0, Blue=1 etc. Adjust range if needed or use Enum.GetValues
+                    c = (CharacterColor)Random.Range(0, 4); 
+                }
+                busQueue.Enqueue(c);
+            }
+            return;
+        }
+
         // 1. Tally up total characters needed for each color across ALL nodes
         Dictionary<CharacterColor, int> colorTotals = new Dictionary<CharacterColor, int>();
         
@@ -210,27 +236,60 @@ public class BusSpawner : MonoBehaviour
         
         if (freedSlot != -1)
         {
-             AdvanceLane(freedSlot);
+             // Identify Lane (0=Left, 1=Right) -> assuming interleaved slots 0,1,2,3...
+             // Slot 0, 2, 4 = Lane 0
+             // Slot 1, 3, 5 = Lane 1
+             int lane = freedSlot % 2; 
+             CompactLane(lane);
         }
     }
 
     void HandleBusFullDeparture(Bus bus)
     {
-        GameManager.Instance.CheckLevelStatus(); // Hook back to GM
+        GameManager.Instance.CheckLevelStatus(); 
     }
     
-    void AdvanceLane(int targetSlot)
+    // Robust Iterative Compaction
+    void CompactLane(int laneRemainder)
     {
-        int sourceSlot = targetSlot + 2;
-        if (sourceSlot < waitingLocationOccupants.Length)
+        // Iterate through the lane slots
+        for (int targetSlot = laneRemainder; targetSlot < waitingLocationOccupants.Length; targetSlot += 2)
         {
-            Bus mover = waitingLocationOccupants[sourceSlot];
-            if (mover != null)
+            // If we find an empty slot, look ahead for a bus to fill it
+            if (waitingLocationOccupants[targetSlot] == null)
             {
-                waitingLocationOccupants[targetSlot] = mover;
-                waitingLocationOccupants[sourceSlot] = null;
-                mover.UpdateQueuePosition(waitingSpots[targetSlot], targetSlot);
-                AdvanceLane(sourceSlot);
+                 // Scan ahead
+                 int sourceSlot = -1;
+                 for (int scan = targetSlot + 2; scan < waitingLocationOccupants.Length; scan += 2)
+                 {
+                     if (waitingLocationOccupants[scan] != null)
+                     {
+                         sourceSlot = scan;
+                         break; // Found nearest bus
+                     }
+                 }
+                 
+                 // If we found a bus to move
+                 if (sourceSlot != -1)
+                 {
+                     Bus mover = waitingLocationOccupants[sourceSlot];
+                     waitingLocationOccupants[targetSlot] = mover;
+                     waitingLocationOccupants[sourceSlot] = null;
+                     
+                     if (mover != null)
+                     {
+                         mover.UpdateQueuePosition(waitingSpots[targetSlot], targetSlot);
+                     }
+                     
+                     // Since we filled a slot, we need to check if *next* slots can be filled too.
+                     // The loop continues, checking targetSlot again? No, targetSlot is now full.
+                     // But we should continue outer loop.
+                 }
+                 else
+                 {
+                     // No more buses ahead in this lane. We are done.
+                     return;
+                 }
             }
         }
     }

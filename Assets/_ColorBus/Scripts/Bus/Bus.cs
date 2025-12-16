@@ -40,8 +40,8 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     [SerializeField] private Transform _exitPoint; 
     public Transform ExitPoint { get => _exitPoint; set => _exitPoint = value; }
 
-    [SerializeField] private float _forwardCheckDistance = 1.25f;
-    [SerializeField] private float _detectionRadius = .75f;
+    [SerializeField] private float _collisionCheckDistance = 1.25f;
+    [SerializeField] private float _nodeDetectionRadius = .75f;
 
     // State Fields (Underscore naming)
     private bool _isMoving = false;
@@ -62,6 +62,17 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     public bool IsDeparting => _tapToStart; 
     public bool IsMoving => _isMoving || _isTransformMoving; 
     public bool IsOnPath => _isMoving; // Higher priority (Main loop)
+    public bool IsLoadingPassengers => _isLoadingPassengers;
+
+    private void Awake()
+    {
+        _capacity = Mathf.Max(1, _capacity);
+    }
+
+    private void OnValidate()
+    {
+        _capacity = Mathf.Max(1, _capacity);
+    }
 
     public void OnPointerDown(PointerEventData eventData) => TryLaunchBus();
     public void OnPointerClick(PointerEventData eventData) => TryLaunchBus();
@@ -187,7 +198,11 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             while (!BusSpawner.Instance.TryLockEntry()) yield return new WaitForSeconds(0.1f);
         }
 
-        yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(0), 0.5f, true, true));
+        // Calculate natural entry point
+        float entryT = _currentPath.GetClosestT(transform.position);
+        _currentT = entryT; // Sync internal time
+        
+        yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(entryT), 0.5f, true, true));
 
         // RELEASE LOCK
         if (BusSpawner.Instance != null) BusSpawner.Instance.UnlockEntry();
@@ -233,6 +248,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         
         if (_passengers.Count >= _capacity && _currentT > 0.8f) 
         {
+            Debug.Log($"[Bus] Exiting Path. Capacity Reached ({_passengers.Count}/{_capacity}). Path T: {_currentT:F2}");
             _isMoving = false;
             _isExiting = true; 
         }
@@ -240,7 +256,10 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private void CheckForStopNode()
     {
-        Collider[] limits = Physics.OverlapSphere(transform.position, _detectionRadius); 
+        if (_nodeDetectionRadius <= 0f) return; // Feature: Set to 0 to disable stopping
+
+        Collider[] limits = Physics.OverlapSphere(transform.position, _nodeDetectionRadius); 
+        // Debug.Log($"[Bus] Node Check. Radius: {_nodeDetectionRadius}, Hits: {limits.Length}");
         foreach (var hit in limits)
         {
             Node node = hit.GetComponent<Node>();
@@ -296,7 +315,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     
     private bool IsPathBlocked()
     {
-        float boxLen = _forwardCheckDistance;
+        float boxLen = _collisionCheckDistance;
         float boxWidth = 1.5f; 
         Vector3 center = transform.position + (transform.forward * (boxLen * 0.5f)) + (Vector3.up * 0.5f);
         Vector3 halfExtents = new Vector3(boxWidth * 0.5f, 1.0f, boxLen * 0.5f);
@@ -308,11 +327,14 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             Bus otherBus = hit.GetComponentInParent<Bus>();
             if (otherBus != null && otherBus != this)
             {
+                // CRITICAL SAFETY: Always stop for a loading bus
+                if (otherBus.IsLoadingPassengers) return true;
+
                 // PRIORITY LOGIC:
                 // If I am ON THE PATH (_isMoving), I have right of way over buses that are DEPARTING/ENTERING.
                 if (this._isMoving && !otherBus._isMoving && otherBus.IsDeparting) continue; 
 
-                 if (!otherBus.IsInQueue || otherBus.IsDeparting) return true;
+                 if (!otherBus.IsInQueue) return true;
             }
         }
         return false;
@@ -321,7 +343,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-        float boxLen = _forwardCheckDistance;
+        float boxLen = _collisionCheckDistance;
         float boxWidth = 1.5f;
         Vector3 center = transform.position + (transform.forward * (boxLen * 0.5f)) + (Vector3.up * 0.5f);
         Vector3 size = new Vector3(boxWidth, 2.0f, boxLen);
@@ -332,7 +354,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         Gizmos.matrix = old;
         
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+        Gizmos.DrawWireSphere(transform.position, _nodeDetectionRadius);
     }
 
     private IEnumerator DriveToExitRoutine()
