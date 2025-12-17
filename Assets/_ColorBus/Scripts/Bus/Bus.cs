@@ -369,7 +369,5 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 yield return null;
             }
         }
-        OnBusDeparted?.Invoke(this);
-        Destroy(gameObject);
     }
 }
