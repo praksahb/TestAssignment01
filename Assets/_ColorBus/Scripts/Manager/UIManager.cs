@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class UIManager : GenericSingleton<UIManager>
 {
@@ -48,13 +49,13 @@ public class UIManager : GenericSingleton<UIManager>
 
     private void OnNextLevelClicked()
     {
-        Debug.Log("Next Level Clicked (Logic to be implemented in SceneLoader)");
-        // SceneManager.LoadScene(nextSceneIndex);
+        Debug.Log("Next Level Clicked. (Reloading current for demo)");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private void OnRetryClicked()
     {
-         Debug.Log("Retry Clicked");
-         // SceneManager.LoadScene(currentScene);
+         Debug.Log("Retry Clicked - Restarting Level");
+         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

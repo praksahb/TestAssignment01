@@ -89,6 +89,8 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 Debug.Log("Bus Tap Ignored: Max Active Buses Reached.");
                 return;
             }
+            if (HapticManager.Instance != null) HapticManager.Instance.TriggerLight();
+
             Debug.Log("Bus Tap Received. Queuing start...");
             _tapToStart = true;
         }
@@ -299,6 +301,9 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 int seatIdx = _passengers.Count - 1;
                 Transform seat = transform; 
                 if (seatIdx < _seatPositions.Length && _seatPositions[seatIdx] != null) seat = _seatPositions[seatIdx];
+
+                // Trigger Haptic
+                if (HapticManager.Instance != null) HapticManager.Instance.TriggerLight();
 
                 c.MoveToBus(seat, this);
                 
