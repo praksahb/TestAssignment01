@@ -189,7 +189,7 @@ public class BusSpawner : MonoBehaviour
         }
     }
 
-    IEnumerator SpawnBusRoutine()
+    private IEnumerator SpawnBusRoutine()
     {
         yield return new WaitForSeconds(1.0f); 
 
@@ -206,7 +206,7 @@ public class BusSpawner : MonoBehaviour
         }
     }
 
-    int GetFirstAvailableSpot()
+    private int GetFirstAvailableSpot()
     {
         if (waitingLocationOccupants == null) return -1;
         for (int i = 0; i < waitingLocationOccupants.Length; i++)
@@ -216,7 +216,7 @@ public class BusSpawner : MonoBehaviour
         return -1;
     }
 
-    void SpawnBus(CharacterColor color, int index)
+    private void SpawnBus(CharacterColor color, int index)
     {
         GameObject busObj = Instantiate(busPrefab);
         Bus bus = busObj.GetComponent<Bus>();
@@ -229,7 +229,7 @@ public class BusSpawner : MonoBehaviour
         bus.OnBusDeparted += HandleBusFullDeparture;
     }
 
-    void HandleBusLeavingQueue(Bus bus)
+    private void HandleBusLeavingQueue(Bus bus)
     {
         int freedSlot = -1;
         for (int i = 0; i < waitingLocationOccupants.Length; i++)
@@ -252,7 +252,7 @@ public class BusSpawner : MonoBehaviour
         }
     }
 
-    void HandleBusFullDeparture(Bus bus)
+    private void HandleBusFullDeparture(Bus bus)
     {
         _currentOnPathBuses--;
         if (_currentOnPathBuses < 0) _currentOnPathBuses = 0;
@@ -263,7 +263,7 @@ public class BusSpawner : MonoBehaviour
     }
     
     // Robust Iterative Compaction
-    void CompactLane(int laneRemainder)
+    private void CompactLane(int laneRemainder)
     {
         // Iterate through the lane slots
         for (int targetSlot = laneRemainder; targetSlot < waitingLocationOccupants.Length; targetSlot += 2)

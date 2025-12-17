@@ -41,6 +41,7 @@ public class GameManager : GenericSingleton<GameManager>
         if (allChars.Length == 0 && !spawnerActive && !anyBusActive)
         {
             Debug.Log("LEVEL COMPLETE!");
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.LevelComplete);
             if (UIManager.Instance != null) UIManager.Instance.ShowLevelComplete();
         }
         // FAIL CONDITION: No Pending Buses, No Active Buses, But Chars REMAIN

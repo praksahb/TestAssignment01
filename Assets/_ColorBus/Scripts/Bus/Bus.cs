@@ -6,44 +6,36 @@ using UnityEngine.EventSystems;
 public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 {
     [Header("Bus Stats")]
-    [UnityEngine.Serialization.FormerlySerializedAs("color")]
     [SerializeField] private CharacterColor _busColor;
     public CharacterColor BusColor { get => _busColor; set => _busColor = value; }
 
-    [UnityEngine.Serialization.FormerlySerializedAs("capacity")]
     [SerializeField] private int _capacity = 5;
     public int Capacity => _capacity;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("speed")]
     [SerializeField] private float _speed = 5f;
     public float Speed => _speed;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("passengers")]
     [SerializeField] private List<Character> _passengers = new List<Character>();
     public List<Character> Passengers => _passengers;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("seatPositions")]
     [SerializeField] private Transform[] _seatPositions; 
     public Transform[] SeatPositions => _seatPositions;
     
     [Header("Visuals")]
-    [UnityEngine.Serialization.FormerlySerializedAs("busRenderer")]
     [SerializeField] private Renderer _busRenderer; 
     public Renderer BusRenderer => _busRenderer;
     
     [Header("Path Settings")]
-    [UnityEngine.Serialization.FormerlySerializedAs("currentPath")]
     [SerializeField] private SimpleSpline _currentPath;
     public SimpleSpline CurrentPath { get => _currentPath; set => _currentPath = value; }
 
-    [UnityEngine.Serialization.FormerlySerializedAs("exitPoint")]
     [SerializeField] private Transform _exitPoint; 
     public Transform ExitPoint { get => _exitPoint; set => _exitPoint = value; }
 
     [SerializeField] private float _collisionCheckDistance = 1.25f;
     [SerializeField] private float _nodeDetectionRadius = .75f;
 
-    // State Fields (Underscore naming)
+    // State Fields 
     private bool _isMoving = false;
     private bool _tapToStart = false;
     private float _currentT = 0f;
@@ -51,17 +43,20 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private bool _isLoadingPassengers = false;
     private bool _isTransformMoving = false; 
 
+    public float CurrentT => _currentT; 
+
     public System.Action<Bus> OnBusDeparted;
     public System.Action<Bus> OnLeaveQueue; 
     
     private int _queueIndex = -1;
+
     [SerializeField] private bool _isInQueue = false;
 
     // Priority Properties
+    public bool IsOnPath => _isMoving; // Higher priority (Main loop)
     public bool IsInQueue => _isInQueue; 
     public bool IsDeparting => _tapToStart; 
     public bool IsMoving => _isMoving || _isTransformMoving; 
-    public bool IsOnPath => _isMoving; // Higher priority (Main loop)
     public bool IsLoadingPassengers => _isLoadingPassengers;
 
     private void Awake()
@@ -89,10 +84,16 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 Debug.Log("Bus Tap Ignored: Max Active Buses Reached.");
                 return;
             }
-            if (HapticManager.Instance != null) HapticManager.Instance.TriggerLight();
+            if (HapticManager.Instance != null) HapticManager.Instance.TriggerVibrate();
+            
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.BusTapPositive);
 
             Debug.Log("Bus Tap Received. Queuing start...");
             _tapToStart = true;
+        }
+        else if (_isInQueue && _queueIndex > 1)
+        {
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.BusTapNegative);
         }
     }
 
@@ -104,6 +105,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         _queueIndex = index;
         _isInQueue = true;
         
+  
         if (_busRenderer == null) _busRenderer = GetComponentInChildren<Renderer>();
         if (_busRenderer != null) _busRenderer.material.color = GetColorValue(busColor);
         
@@ -204,12 +206,13 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         float entryT = _currentPath.GetClosestT(transform.position);
         _currentT = entryT; // Sync internal time
         
+        _isInQueue = false; // Status Update: No longer "Parked", now "Entering"
+        
         yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(entryT), 0.5f, true, true));
 
         // RELEASE LOCK
         if (BusSpawner.Instance != null) BusSpawner.Instance.UnlockEntry();
 
-        _isInQueue = false;
         OnLeaveQueue?.Invoke(this); 
         
         // Loop
@@ -251,6 +254,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         if (_passengers.Count >= _capacity && _currentT > 0.8f) 
         {
             Debug.Log($"[Bus] Exiting Path. Capacity Reached ({_passengers.Count}/{_capacity}). Path T: {_currentT:F2}");
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.BusFull);
             _isMoving = false;
             _isExiting = true; 
         }
@@ -302,8 +306,8 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 Transform seat = transform; 
                 if (seatIdx < _seatPositions.Length && _seatPositions[seatIdx] != null) seat = _seatPositions[seatIdx];
 
-                // Trigger Haptic
-                if (HapticManager.Instance != null) HapticManager.Instance.TriggerLight();
+                if (HapticManager.Instance != null) HapticManager.Instance.TriggerVibrate();
+                if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.PassengerBoarding);
 
                 c.MoveToBus(seat, this);
                 
@@ -335,9 +339,26 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 // CRITICAL SAFETY: Always stop for a loading bus
                 if (otherBus.IsLoadingPassengers) return true;
 
+                // DEADLOCK FIX: If I am merging (TransformMoving), I have right of way over path buses.
+                if (this._isTransformMoving && otherBus.IsOnPath) continue;
+
+                // DEADLOCK FIX 2: Side-by-Side on Path
+                // If we are both on the path, the one 'ahead' (higher T) has right of way.
+                // We handle wrap-around simplisticly: if diff > 0.5, we assume wrap.
+                if (this.IsOnPath && otherBus.IsOnPath && this.CurrentPath == otherBus.CurrentPath)
+                {
+                    float diff = this._currentT - otherBus.CurrentT;
+                    // Fix Wrap-around logic (e.g. 0.01 vs 0.99)
+                    if (diff > 0.5f) diff -= 1f;
+                    else if (diff < -0.5f) diff += 1f;
+
+                    if (diff > 0) continue; // I am ahead, I keep going.
+                }
+
                 // PRIORITY LOGIC:
                 // If I am ON THE PATH (_isMoving), I have right of way over buses that are DEPARTING/ENTERING.
-                if (this._isMoving && !otherBus._isMoving && otherBus.IsDeparting) continue; 
+                // FIX: Check 'IsMoving' (Property) which includes merging state. If they are merging, they are an obstacle.
+                if (this._isMoving && !otherBus.IsMoving && otherBus.IsDeparting) continue; 
 
                  if (!otherBus.IsInQueue) return true;
             }
