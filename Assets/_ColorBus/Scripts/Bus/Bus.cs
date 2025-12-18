@@ -42,6 +42,8 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private bool _isExiting = false;
     private bool _isLoadingPassengers = false;
     private bool _isTransformMoving = false; 
+    private Vector3 _lastNodeCheckPos; 
+    private Collider[] _hitBuffer = new Collider[20]; 
 
     public float CurrentT => _currentT; 
 
@@ -249,7 +251,11 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         
         transform.position = pos;
         
-        CheckForStopNode();
+        if (Vector3.SqrMagnitude(transform.position - _lastNodeCheckPos) > 0.01f) // 0.1 * 0.1
+        {
+            CheckForStopNode();
+            _lastNodeCheckPos = transform.position;
+        }
         
         if (_passengers.Count >= _capacity && _currentT > 0.8f) 
         {
@@ -264,10 +270,11 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     {
         if (_nodeDetectionRadius <= 0f) return; // Feature: Set to 0 to disable stopping
 
-        Collider[] limits = Physics.OverlapSphere(transform.position, _nodeDetectionRadius); 
-        // Debug.Log($"[Bus] Node Check. Radius: {_nodeDetectionRadius}, Hits: {limits.Length}");
-        foreach (var hit in limits)
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, _nodeDetectionRadius, _hitBuffer);
+        // Debug.Log($"[Bus] Node Check. Radius: {_nodeDetectionRadius}, Hits: {hitCount}");
+        for (int i = 0; i < hitCount; i++)
         {
+            var hit = _hitBuffer[i];
             Node node = hit.GetComponent<Node>();
             if (node != null)
             {
