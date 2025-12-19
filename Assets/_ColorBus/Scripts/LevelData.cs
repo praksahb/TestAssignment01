@@ -15,4 +15,7 @@ public class LevelData : ScriptableObject
     
     public NodeSetup[] nodes;
     public CharacterColor[] busSequence;
+    
+    [Header("Level Info")]
+    public int levelNumber;
 }

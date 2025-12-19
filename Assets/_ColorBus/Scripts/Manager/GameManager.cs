@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class GameManager : GenericSingleton<GameManager>
 {
+    public static event Action OnLevelCompleted;
     [SerializeField] private CharacterColor[] debugSpawnSequence; // Just for reference if needed
 
     private void Start()
@@ -43,6 +45,7 @@ public class GameManager : GenericSingleton<GameManager>
             Debug.Log("LEVEL COMPLETE!");
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.LevelComplete);
             if (UIManager.Instance != null) UIManager.Instance.ShowLevelComplete();
+            OnLevelCompleted?.Invoke();
         }
         // FAIL CONDITION: No Pending Buses, No Active Buses, But Chars REMAIN
         else if (!spawnerActive && !anyBusActive && allChars.Length > 0)

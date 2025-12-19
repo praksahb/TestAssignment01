@@ -72,7 +72,7 @@ MonoBehaviour:
   _emitterConstraintEnabled:
     enabled: 0
   _emitterConstraintTransform: {fileID: 0}
-  _shape: 0
+  _shape: 4
   _spread: 1
   _spreadLoop: 23
   _startDelay: 0

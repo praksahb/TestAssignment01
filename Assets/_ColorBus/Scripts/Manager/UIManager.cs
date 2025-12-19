@@ -7,6 +7,10 @@ public class UIManager : GenericSingleton<UIManager>
 {
     [Header("HUD")]
     public TextMeshProUGUI activeBusCountText;
+    public TextMeshProUGUI levelText;
+
+    [Header("Level Data")]
+    public LevelData levelData; // Optional override
 
     [Header("Panels")]
     public GameObject levelCompletePanel;
@@ -25,6 +29,21 @@ public class UIManager : GenericSingleton<UIManager>
         // Hook up buttons
         if (nextLevelButton != null) nextLevelButton.onClick.AddListener(OnNextLevelClicked);
         if (retryButton != null) retryButton.onClick.AddListener(OnRetryClicked);
+
+        UpdateLevelText();
+    }
+
+    private void UpdateLevelText()
+    {
+        if (levelText != null)
+        {
+            int levelNum = SceneManager.GetActiveScene().buildIndex;
+            if (levelData != null)
+            {
+                levelNum = levelData.levelNumber;
+            }
+            levelText.SetText(levelNum.ToString());
+        }
     }
 
     public void ShowLevelComplete()
