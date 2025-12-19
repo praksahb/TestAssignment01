@@ -8,6 +8,10 @@ public class CoinCollector : MonoBehaviour
     public TextMeshProUGUI coinText;
     public TextMeshProUGUI rewardText;
 
+    [Header("Animation Settings")]
+    [SerializeField] private float animationDuration = 1.0f;
+    [SerializeField] private float animationDelay = 0.5f;
+
     private const string COIN_PREF_KEY = "TotalCoins";
 
     private void Start()
@@ -39,8 +43,6 @@ public class CoinCollector : MonoBehaviour
         {
             rewardText.text = "+" + amount;
             rewardText.gameObject.SetActive(true);
-            // Optional: Add a simple fade/move animation here if using DOTween or similar, 
-            // or just let it sit there for now.
         }
         
         Debug.Log($"Collected {amount} coins! Animate {oldTotal} -> {newTotal}");
@@ -49,13 +51,17 @@ public class CoinCollector : MonoBehaviour
 
     private IEnumerator AnimateCoins(int startValue, int endValue)
     {
-        float duration = 1.0f;
+        if (animationDelay > 0)
+        {
+            yield return new WaitForSeconds(animationDelay);
+        }
+
         float elapsed = 0f;
 
-        while (elapsed < duration)
+        while (elapsed < animationDuration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / duration;
+            float t = Mathf.Clamp01(elapsed / animationDuration);
             // Linear interpolation for simple counting
             int currentValue = (int)Mathf.Lerp(startValue, endValue, t);
             UpdateCoinDisplay(currentValue);
@@ -67,7 +73,7 @@ public class CoinCollector : MonoBehaviour
 
     private int GetTotalCoins()
     {
-        return PlayerPrefs.GetInt(COIN_PREF_KEY, 5000);
+        return PlayerPrefs.GetInt(COIN_PREF_KEY, 0);
     }
 
     private void SaveCoins(int total)
