@@ -6,11 +6,23 @@ using System;
 public class GameManager : GenericSingleton<GameManager>
 {
     public static event Action OnLevelCompleted;
-    [SerializeField] private CharacterColor[] debugSpawnSequence; // Just for reference if needed
+    public static event Action OnLevelStart;
+
+
+    [SerializeField] private BusSpawner _busSpawner;
+    [SerializeField] private CharacterColor[] _debugSpawnSequence; // Just for reference if needed
 
     private void Start()
     {
-        // Manager initialization if any
+        // Invoke Level Start after a frame to ensure all subscribers (like BusSpawner) have initialized their Listeners in OnEnable/Start
+        StartCoroutine(LevelStartRoutine());
+    }
+
+    private IEnumerator LevelStartRoutine()
+    {
+        yield return null; 
+        Debug.Log("GameManager: Level Started");
+        OnLevelStart?.Invoke();
     }
 
     public void CheckLevelStatus()
@@ -28,7 +40,7 @@ public class GameManager : GenericSingleton<GameManager>
         
         // We need to check if Spawner is done too.
         bool spawnerActive = false;
-        if(BusSpawner.Instance != null && BusSpawner.Instance.HasBusesPending)
+        if(_busSpawner != null && _busSpawner.HasBusesPending)
         {
             spawnerActive = true;
         }

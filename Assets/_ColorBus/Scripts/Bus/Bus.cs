@@ -51,6 +51,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     public System.Action<Bus> OnLeaveQueue; 
     
     private int _queueIndex = -1;
+    private BusSpawner _busSpawner; 
 
     [SerializeField] private bool _isInQueue = false;
 
@@ -81,7 +82,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
         if (_isInQueue && _queueIndex <= 1)
         {
-            if (BusSpawner.Instance != null && !BusSpawner.Instance.RequestBusLaunch())
+            if (_busSpawner != null && !_busSpawner.RequestBusLaunch())
             {
                 Debug.Log("Bus Tap Ignored: Max Active Buses Reached.");
                 return;
@@ -99,15 +100,35 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         }
     }
 
-    public void InitializeAsQueued(SimpleSpline path, Transform exit, CharacterColor busColor, Transform spawnSpot, int index)
+    private Coroutine _activeMoveCoroutine;
+
+    // Helper to ensure only one move action happens at a time to prevent overlap/race conditions
+    private Coroutine StartMoveAction(IEnumerator routine)
+    {
+        if (_activeMoveCoroutine != null)
+        {
+            StopCoroutine(_activeMoveCoroutine);
+            _isTransformMoving = false; // Reset flag just in case
+        }
+        _activeMoveCoroutine = StartCoroutine(MoveActionWrapper(routine));
+        return _activeMoveCoroutine;
+    }
+
+    private IEnumerator MoveActionWrapper(IEnumerator routine)
+    {
+        yield return routine;
+        _activeMoveCoroutine = null;
+    }
+
+    public void InitializeAsQueued(SimpleSpline path, Transform exit, CharacterColor busColor, Transform spawnSpot, int index, BusSpawner spawner)
     {
         _currentPath = path;
         _exitPoint = exit;
         _busColor = busColor;
         _queueIndex = index;
         _isInQueue = true;
+        _busSpawner = spawner;
         
-  
         if (_busRenderer == null) _busRenderer = GetComponentInChildren<Renderer>();
         if (_busRenderer != null) _busRenderer.material.color = GetColorValue(busColor);
         
@@ -115,13 +136,14 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         transform.position = spawnSpot.position + startOffset;
         transform.rotation = Quaternion.Euler(0, 180, 0); 
         
-        StartCoroutine(QueueEntryRoutine(spawnSpot.position));
+        StartMoveAction(MoveToPosition(spawnSpot.position, _spawnEntryDuration, false));
+        StartCoroutine(LifeCycleRoutine());
     }
     
     public void UpdateQueuePosition(Transform newSpot, int newIndex)
     {
         _queueIndex = newIndex;
-        StartCoroutine(MoveToQueueSpot(newSpot.position));
+        StartMoveAction(MoveToPosition(newSpot.position, _queueShiftDuration, false));
     }
 
     [Header("Animation Settings")]
@@ -140,16 +162,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         }
     }
 
-    private IEnumerator QueueEntryRoutine(Vector3 targetPos)
-    {
-        yield return StartCoroutine(MoveToPosition(targetPos, _spawnEntryDuration, false));
-        StartCoroutine(LifeCycleRoutine());
-    }
-    
-    private IEnumerator MoveToQueueSpot(Vector3 targetPos)
-    {
-        yield return StartCoroutine(MoveToPosition(targetPos, _queueShiftDuration, false));
-    }
+    // Removed wrapped routines QueueEntryRoutine and MoveToQueueSpot as they are now handled directly via StartMoveAction
     
     private IEnumerator MoveToPosition(Vector3 target, float duration, bool lookAtTarget = true, bool checkCollisions = false)
     {
@@ -199,9 +212,9 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         }
         
         // ACQUIRE LOCK (Entry Merge)
-        if (BusSpawner.Instance != null)
+        if (_busSpawner != null)
         {
-            while (!BusSpawner.Instance.TryLockEntry()) yield return new WaitForSeconds(0.1f);
+            while (!_busSpawner.TryLockEntry()) yield return new WaitForSeconds(0.1f);
         }
 
         // Calculate natural entry point
@@ -210,10 +223,10 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         
         _isInQueue = false; // Status Update: No longer "Parked", now "Entering"
         
-        yield return StartCoroutine(MoveToPosition(_currentPath.GetPointOnPath(entryT), 0.5f, true, true));
+        yield return StartMoveAction(MoveToPosition(_currentPath.GetPointOnPath(entryT), 0.5f, true, true));
 
         // RELEASE LOCK
-        if (BusSpawner.Instance != null) BusSpawner.Instance.UnlockEntry();
+        if (_busSpawner != null) _busSpawner.UnlockEntry();
 
         OnLeaveQueue?.Invoke(this); 
         
@@ -260,7 +273,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         if (_passengers.Count >= _capacity && _currentT > 0.8f) 
         {
             Debug.Log($"[Bus] Exiting Path. Capacity Reached ({_passengers.Count}/{_capacity}). Path T: {_currentT:F2}");
-            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.BusFull);
+            // Audio moved to LoadPassengersRoutine
             _isMoving = false;
             _isExiting = true; 
         }
@@ -295,7 +308,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private IEnumerator StopAndLoadRoutine(Node node)
     {
         _isLoadingPassengers = true; 
-        if (node.StopPoint != null) yield return StartCoroutine(MoveToPosition(node.StopPoint.position, 0.5f)); 
+        if (node.StopPoint != null) yield return StartMoveAction(MoveToPosition(node.StopPoint.position, 0.5f)); 
         yield return StartCoroutine(LoadPassengersRoutine(node));
         if (_currentPath != null) _currentT = _currentPath.GetClosestT(transform.position);
         _isLoadingPassengers = false;
@@ -318,7 +331,13 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
                 c.MoveToBus(seat, this);
                 
+                if (_passengers.Count >= _capacity)
+                {
+                    if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.BusFull);
+                }
+
                 float timeout = 3.0f;
+                // ...
                 while (c != null && Vector3.Distance(c.transform.position, seat.position) > 0.2f && timeout > 0f)
                 {
                      timeout -= Time.deltaTime;
