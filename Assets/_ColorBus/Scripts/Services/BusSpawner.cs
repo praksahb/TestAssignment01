@@ -5,13 +5,13 @@ using UnityEngine;
 public class BusSpawner : MonoBehaviour
 {
     [Header("Configuration")]
-    public Bus busPrefab;
-    public Transform[] waitingSpots; // 0: FrontLeft, 1: FrontRight...
-    public SimpleSpline levelPath;
-    public Transform exitPoint;
+    [SerializeField] private Bus _busPrefab;
+    [SerializeField] private Transform[] _waitingSpots; // 0: FrontLeft, 1: FrontRight...
+    [SerializeField] private SimpleSpline _levelPath;
+    [SerializeField] private Transform _exitPoint;
 
     [Header("Auto-Schedule Settings")]
-    public List<Node> levelNodes = new List<Node>(); // All nodes in the level
+    [SerializeField] private List<Node> _levelNodes = new List<Node>(); // All nodes in the level
     // Defines the ORDER of colors to spawn. 
     // The Spawner will calculate the COUNT needed for each color based on the Nodes.
     // e.g. If specificLevelSequence is [Red, Green], it spawns ALL needed Red, then ALL needed Green.
@@ -19,18 +19,18 @@ public class BusSpawner : MonoBehaviour
     // BUT checking "Total" vs "Batch" is tricky.
     // For now, let's just aggregate totals per color and strict order?
     // User Update: "bus count should be equivalent to total number... divided by capacity"
-    public List<CharacterColor> spawnSequencePrototype;
+    [SerializeField] private List<CharacterColor> _spawnSequencePrototype;
 
     [Header("Debug Settings")]
     [SerializeField] private bool _debugMode = false;
     [SerializeField] private int _debugSpawnCount = 10;
     [SerializeField] private List<CharacterColor> _debugSpawnSequence;
 
-    private Queue<CharacterColor> busQueue = new Queue<CharacterColor>();
-    private Bus[] waitingLocationOccupants;
-    private int busCapacity;
+    private Queue<CharacterColor> _busQueue = new Queue<CharacterColor>();
+    private Bus[] _waitingLocationOccupants;
+    private int _busCapacity;
 
-    public bool HasBusesPending => busQueue.Count > 0;
+    public bool HasBusesPending => _busQueue.Count > 0;
 
     // Critical Section Lock for Entry Point merge
     private bool _entryLocked = false;
@@ -61,10 +61,11 @@ public class BusSpawner : MonoBehaviour
     {
         _entryLocked = false;
     }
+
     private void Awake()
     {
-        if (waitingSpots != null)
-            waitingLocationOccupants = new Bus[waitingSpots.Length];
+        if (_waitingSpots != null)
+            _waitingLocationOccupants = new Bus[_waitingSpots.Length];
     }
 
     private void OnEnable()
@@ -90,7 +91,7 @@ public class BusSpawner : MonoBehaviour
     [ContextMenu("Recalculate Schedule")]
     public void CalculateSchedule()
     {
-        busQueue.Clear();
+        _busQueue.Clear();
 
         if (_debugMode)
         {
@@ -108,7 +109,7 @@ public class BusSpawner : MonoBehaviour
                     // We cast to int, assuming Red=0, Blue=1 etc. Adjust range if needed or use Enum.GetValues
                     c = (CharacterColor)Random.Range(0, 4);
                 }
-                busQueue.Enqueue(c);
+                _busQueue.Enqueue(c);
             }
             return;
         }
@@ -116,7 +117,7 @@ public class BusSpawner : MonoBehaviour
         // 1. Tally up total characters needed for each color across ALL nodes
         Dictionary<CharacterColor, int> colorTotals = new Dictionary<CharacterColor, int>();
 
-        foreach (var node in levelNodes)
+        foreach (var node in _levelNodes)
         {
             if (node == null) continue;
             foreach (var batch in node.Batches)
@@ -130,9 +131,9 @@ public class BusSpawner : MonoBehaviour
         // If the user defines [Green, Red, Blue], we calculate total Green buses needed, add them, then Red, etc.
         // This is a naive implementation but fits "Total / Capacity".
 
-        if (busPrefab != null)
+        if (_busPrefab != null)
         {
-            busCapacity = busPrefab.Capacity;
+            _busCapacity = _busPrefab.Capacity;
         }
 
         if (colorTotals.Count > 0)
@@ -141,14 +142,14 @@ public class BusSpawner : MonoBehaviour
             List<CharacterColor> tempSpawnList = new List<CharacterColor>();
 
             // 2. Generate List based on Prototype Sequence first
-            if (spawnSequencePrototype.Count > 0)
+            if (_spawnSequencePrototype.Count > 0)
             {
-                foreach (var color in spawnSequencePrototype)
+                foreach (var color in _spawnSequencePrototype)
                 {
                     if (colorTotals.ContainsKey(color))
                     {
                         int totalChars = colorTotals[color];
-                        int busesNeed = Mathf.CeilToInt(totalChars / (float)busCapacity);
+                        int busesNeed = Mathf.CeilToInt(totalChars / (float)_busCapacity);
 
                         for (int i = 0; i < busesNeed; i++)
                         {
@@ -164,7 +165,7 @@ public class BusSpawner : MonoBehaviour
             {
                 if (kvp.Value > 0)
                 {
-                    int busesNeed = Mathf.CeilToInt(kvp.Value / (float)busCapacity);
+                    int busesNeed = Mathf.CeilToInt(kvp.Value / (float)_busCapacity);
                     for (int i = 0; i < busesNeed; i++) tempSpawnList.Add(kvp.Key);
                 }
             }
@@ -175,11 +176,11 @@ public class BusSpawner : MonoBehaviour
             // 5. Enqueue
             foreach (var color in tempSpawnList)
             {
-                busQueue.Enqueue(color);
+                _busQueue.Enqueue(color);
             }
         }
 
-        Debug.Log($"BusSpawner: Scheduled {busQueue.Count} buses (Randomized) from {levelNodes.Count} nodes.");
+        Debug.Log($"BusSpawner: Scheduled {_busQueue.Count} buses (Randomized) from {_levelNodes.Count} nodes.");
     }
 
     // Fisher-Yates Shuffle
@@ -198,13 +199,13 @@ public class BusSpawner : MonoBehaviour
     {
         yield return new WaitForSeconds(1.0f);
 
-        while (busQueue.Count > 0)
+        while (_busQueue.Count > 0)
         {
             int targetIndex = GetFirstAvailableSpot();
 
             if (targetIndex != -1)
             {
-                CharacterColor c = busQueue.Dequeue();
+                CharacterColor c = _busQueue.Dequeue();
                 SpawnBus(c, targetIndex);
             }
             yield return new WaitForSeconds(1.0f);
@@ -213,22 +214,22 @@ public class BusSpawner : MonoBehaviour
 
     private int GetFirstAvailableSpot()
     {
-        if (waitingLocationOccupants == null) return -1;
-        for (int i = 0; i < waitingLocationOccupants.Length; i++)
+        if (_waitingLocationOccupants == null) return -1;
+        for (int i = 0; i < _waitingLocationOccupants.Length; i++)
         {
-            if (waitingLocationOccupants[i] == null) return i;
+            if (_waitingLocationOccupants[i] == null) return i;
         }
         return -1;
     }
 
     private void SpawnBus(CharacterColor color, int index)
     {
-        Bus bus = Instantiate(busPrefab);
-        Transform spawnSpot = waitingSpots[index];
+        Bus bus = Instantiate(_busPrefab);
+        Transform spawnSpot = _waitingSpots[index];
 
-        waitingLocationOccupants[index] = bus;
+        _waitingLocationOccupants[index] = bus;
 
-        bus.InitializeAsQueued(levelPath, exitPoint, color, spawnSpot, index, this); // Inject this
+        bus.InitializeAsQueued(_levelPath, _exitPoint, color, spawnSpot, index, this);
         bus.OnLeaveQueue += HandleBusLeavingQueue;
         bus.OnBusDeparted += HandleBusFullDeparture;
     }
@@ -236,12 +237,15 @@ public class BusSpawner : MonoBehaviour
     private void HandleBusLeavingQueue(Bus bus)
     {
         int freedSlot = -1;
-        for (int i = 0; i < waitingLocationOccupants.Length; i++)
+
+        bus.OnLeaveQueue -= HandleBusLeavingQueue;
+
+        for (int i = 0; i < _waitingLocationOccupants.Length; i++)
         {
-            if (waitingLocationOccupants[i] == bus)
+            if (_waitingLocationOccupants[i] == bus)
             {
                 freedSlot = i;
-                waitingLocationOccupants[i] = null;
+                _waitingLocationOccupants[i] = null;
                 break;
             }
         }
@@ -258,7 +262,8 @@ public class BusSpawner : MonoBehaviour
 
     private void HandleBusFullDeparture(Bus bus)
     {
-        _currentOnPathBuses--;
+        _currentOnPathBuses--;        
+        bus.OnBusDeparted -= HandleBusFullDeparture;
         if (_currentOnPathBuses < 0) _currentOnPathBuses = 0;
 
         if (UIManager.Instance != null) UIManager.Instance.UpdateBusCount(_currentOnPathBuses, _maxActiveBuses);
@@ -267,47 +272,28 @@ public class BusSpawner : MonoBehaviour
     }
 
     // Robust Iterative Compaction
+    // Simplified Collection-Based Compaction (O(N) per lane)
     private void CompactLane(int laneRemainder)
     {
-        // Iterate through the lane slots
-        for (int targetSlot = laneRemainder; targetSlot < waitingLocationOccupants.Length; targetSlot += 2)
+        // 1. Collect all valid buses in this lane
+        List<Bus> laneBuses = new List<Bus>();
+        for (int i = laneRemainder; i < _waitingLocationOccupants.Length; i += 2)
         {
-            // If we find an empty slot, look ahead for a bus to fill it
-            if (waitingLocationOccupants[targetSlot] == null)
+            if (_waitingLocationOccupants[i] != null)
             {
-                // Scan ahead
-                int sourceSlot = -1;
-                for (int scan = targetSlot + 2; scan < waitingLocationOccupants.Length; scan += 2)
-                {
-                    if (waitingLocationOccupants[scan] != null)
-                    {
-                        sourceSlot = scan;
-                        break; // Found nearest bus
-                    }
-                }
-
-                // If we found a bus to move
-                if (sourceSlot != -1)
-                {
-                    Bus mover = waitingLocationOccupants[sourceSlot];
-                    waitingLocationOccupants[targetSlot] = mover;
-                    waitingLocationOccupants[sourceSlot] = null;
-
-                    if (mover != null)
-                    {
-                        mover.UpdateQueuePosition(waitingSpots[targetSlot], targetSlot);
-                    }
-
-                    // Since we filled a slot, we need to check if *next* slots can be filled too.
-                    // The loop continues, checking targetSlot again? No, targetSlot is now full.
-                    // But we should continue outer loop.
-                }
-                else
-                {
-                    // No more buses ahead in this lane. We are done.
-                    return;
-                }
+                laneBuses.Add(_waitingLocationOccupants[i]);
+                _waitingLocationOccupants[i] = null; // Clear current spot
             }
+        }
+
+        // 2. Place them back into the lane starting from the front
+        int targetSlot = laneRemainder;
+        foreach (Bus bus in laneBuses)
+        {
+            _waitingLocationOccupants[targetSlot] = bus;
+            // Always update position; if it's the same slot, the Bus script should handle the no-op or short move
+            bus.UpdateQueuePosition(_waitingSpots[targetSlot], targetSlot);
+            targetSlot += 2;
         }
     }
 }
