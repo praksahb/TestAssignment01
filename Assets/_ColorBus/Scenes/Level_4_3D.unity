@@ -12750,7 +12750,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _busPrefab: {fileID: 6823080218992937694, guid: 3c98fb91de7e04840bc47265e67955a3, type: 3}
-  _waitingSpots: []
+  _waitingSpots:
+  - {fileID: 249069177}
+  - {fileID: 1325128015}
+  - {fileID: 731315863}
+  - {fileID: 262008557}
+  - {fileID: 366381314}
+  - {fileID: 1801540048}
+  - {fileID: 1298715077}
+  - {fileID: 31675634}
+  - {fileID: 489454767}
+  - {fileID: 1604269585}
   _levelPath: {fileID: 1527459103}
   _exitPoint: {fileID: 1503678140}
   _levelNodes:

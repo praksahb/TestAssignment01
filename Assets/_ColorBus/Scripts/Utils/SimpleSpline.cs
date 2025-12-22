@@ -4,11 +4,11 @@ using UnityEngine;
 public class SimpleSpline : MonoBehaviour
 {
     // Use Transforms for easier editing in the Scene
-    [UnityEngine.Serialization.FormerlySerializedAs("waypoints")]
+
     [SerializeField] private List<Transform> _waypoints = new List<Transform>();
     public List<Transform> Waypoints { get => _waypoints; set => _waypoints = value; } // Public setter needed? Maybe strictly for editor scripts.
     
-    [UnityEngine.Serialization.FormerlySerializedAs("loop")]
+
     [SerializeField] private bool _loop = true;
     public bool Loop => _loop;
 

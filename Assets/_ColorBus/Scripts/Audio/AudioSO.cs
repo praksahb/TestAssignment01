@@ -12,11 +12,12 @@ public class AudioSO : ScriptableObject
         public AudioClip[] clips;
     }
 
-    public List<SoundInfo> soundList = new List<SoundInfo>();
+
+    [SerializeField] private List<SoundInfo> _soundList = new List<SoundInfo>();
 
     public AudioClip GetClip(SoundType type)
     {
-        SoundInfo info = soundList.Find(x => x.type == type);
+        SoundInfo info = _soundList.Find(x => x.type == type);
         if (info != null && info.clips != null && info.clips.Length > 0)
         {
             return info.clips[UnityEngine.Random.Range(0, info.clips.Length)];

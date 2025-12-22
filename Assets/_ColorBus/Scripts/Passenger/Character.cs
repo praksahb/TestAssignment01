@@ -13,11 +13,11 @@ public enum CharacterColor
 public class Character : MonoBehaviour
 {
     [Header("Settings")]
-    [UnityEngine.Serialization.FormerlySerializedAs("color")]
+
     [SerializeField] private CharacterColor _characterColor;
     public CharacterColor CharacterColor { get => _characterColor; set => _characterColor = value; }
 
-    [UnityEngine.Serialization.FormerlySerializedAs("speed")]
+
     [SerializeField] private float _speed = 5.0f;
     public float Speed => _speed;
 

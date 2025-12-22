@@ -5,19 +5,26 @@ using System.Collections;
 public class CoinCollector : MonoBehaviour
 {
     [Header("UI Reference")]
-    public TextMeshProUGUI coinText;
-    public TextMeshProUGUI rewardText;
+    [Header("UI Reference")]
+
+    [SerializeField] private TextMeshProUGUI _coinText;
+    
+
+    [SerializeField] private TextMeshProUGUI _rewardText;
 
     [Header("Animation Settings")]
-    [SerializeField] private float animationDuration = 1.0f;
-    [SerializeField] private float animationDelay = 0.5f;
+
+    [SerializeField] private float _animationDuration = 1.0f;
+    
+
+    [SerializeField] private float _animationDelay = 0.5f;
 
     private const string COIN_PREF_KEY = "TotalCoins";
 
     private void Start()
     {
         UpdateCoinDisplay(GetTotalCoins());
-        if (rewardText != null) rewardText.gameObject.SetActive(false);
+        if (_rewardText != null) _rewardText.gameObject.SetActive(false);
     }
 
     private void OnEnable()
@@ -39,10 +46,10 @@ public class CoinCollector : MonoBehaviour
         SaveCoins(newTotal);
         
         // Show reward text
-        if (rewardText != null)
+        if (_rewardText != null)
         {
-            rewardText.text = "+" + amount;
-            rewardText.gameObject.SetActive(true);
+            _rewardText.text = "+" + amount;
+            _rewardText.gameObject.SetActive(true);
         }
         
         Debug.Log($"Collected {amount} coins! Animate {oldTotal} -> {newTotal}");
@@ -51,17 +58,17 @@ public class CoinCollector : MonoBehaviour
 
     private IEnumerator AnimateCoins(int startValue, int endValue)
     {
-        if (animationDelay > 0)
+        if (_animationDelay > 0)
         {
-            yield return new WaitForSeconds(animationDelay);
+            yield return new WaitForSeconds(_animationDelay);
         }
 
         float elapsed = 0f;
 
-        while (elapsed < animationDuration)
+        while (elapsed < _animationDuration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / animationDuration);
+            float t = Mathf.Clamp01(elapsed / _animationDuration);
             // Linear interpolation for simple counting
             int currentValue = (int)Mathf.Lerp(startValue, endValue, t);
             UpdateCoinDisplay(currentValue);
@@ -84,9 +91,9 @@ public class CoinCollector : MonoBehaviour
 
     private void UpdateCoinDisplay(int value)
     {
-        if (coinText != null)
+        if (_coinText != null)
         {
-            coinText.text = value.ToString();
+            _coinText.text = value.ToString();
         }
     }
 }

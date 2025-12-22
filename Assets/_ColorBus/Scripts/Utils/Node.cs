@@ -30,54 +30,54 @@ public class Node : MonoBehaviour
 
     [Header("Node Configuration")]
     // Replaced flat list with Batches
-    [UnityEngine.Serialization.FormerlySerializedAs("batches")]
+
     [SerializeField] private List<CharacterBatch> _batches = new List<CharacterBatch>();
     public List<CharacterBatch> Batches => _batches;
     
     public enum QueueDirection { Vertical, Horizontal } // Vertical = Up (Stack Down), Horizontal = Left (Stack Right)? 
     
     [Header("Grid Layout")]
-    [UnityEngine.Serialization.FormerlySerializedAs("queueDirection")]
+
     [SerializeField] private QueueDirection _queueDirection = QueueDirection.Vertical;
     public QueueDirection Direction => _queueDirection;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("cols")]
+
     [SerializeField] private int _cols = 2; // Width of the batch (how many columns wide)
     public int Cols => _cols;
     
-    [UnityEngine.Serialization.FormerlySerializedAs("batchSpacing")]
+
     [SerializeField] private float _batchSpacing = 4.0f; // Gap between batches
     public float BatchSpacing => _batchSpacing;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("spacingX")]
+
     [SerializeField] private float _spacingX = 0.8f;
     public float SpacingX => _spacingX;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("spacingZ")]
+
     [SerializeField] private float _spacingZ = 0.8f; // Changed from spacingY
     public float SpacingZ => _spacingZ;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("nextNodes")]
+
     [SerializeField] private Node[] _nextNodes; 
     public Node[] NextNodes => _nextNodes; 
 
-    [UnityEngine.Serialization.FormerlySerializedAs("currentPathIndex")]
+
     [SerializeField] private int _currentPathIndex = 0;
     public int CurrentPathIndex => _currentPathIndex;
 
     [Header("Visuals")]
     // characterSlots is now legacy or used for a single batch if needed, 
     // but the batch system generates its own slots. 
-    [UnityEngine.Serialization.FormerlySerializedAs("characterSlots")]
+
     [SerializeField] private Transform[] _characterSlots; 
     public Transform[] CharacterSlots => _characterSlots;
     
     [Header("Debugging")]
-    [UnityEngine.Serialization.FormerlySerializedAs("testCharacterPrefab")]
+
     [SerializeField] private GameObject _testCharacterPrefab; // User requested prefab reference
     public GameObject TestCharacterPrefab => _testCharacterPrefab;
 
-    [UnityEngine.Serialization.FormerlySerializedAs("stopPoint")]
+
     [SerializeField] private Transform _stopPoint; // Where the bus should actually stop
     public Transform StopPoint => _stopPoint;
 
@@ -89,7 +89,7 @@ public class Node : MonoBehaviour
     }
 
     [Header("Level Configuration")]
-    [UnityEngine.Serialization.FormerlySerializedAs("batchConfig")]
+
     [SerializeField] private List<BatchSetup> _batchConfig = new List<BatchSetup>(); // Define the sequence here
     public List<BatchSetup> BatchConfig => _batchConfig;
 

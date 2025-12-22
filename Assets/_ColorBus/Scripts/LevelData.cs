@@ -13,9 +13,16 @@ public class LevelData : ScriptableObject
         public CharacterColor[] characters;
     }
     
-    public NodeSetup[] nodes;
-    public CharacterColor[] busSequence;
+
+    [SerializeField] private NodeSetup[] _nodes;
+    public NodeSetup[] Nodes => _nodes;
+
+
+    [SerializeField] private CharacterColor[] _busSequence;
+    public CharacterColor[] BusSequence => _busSequence;
     
     [Header("Level Info")]
-    public int levelNumber;
+
+    [SerializeField] private int _levelNumber;
+    public int LevelNumber => _levelNumber;
 }
