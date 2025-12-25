@@ -73,8 +73,8 @@ MonoBehaviour:
     enabled: 0
   _emitterConstraintTransform: {fileID: 0}
   _shape: 4
-  _spread: 1
-  _spreadLoop: 23
+  _spread: 0
+  _spreadLoop: 21.73
   _startDelay: 0
   _radius: 50
   _width: 100
@@ -1053,7 +1053,7 @@ MonoBehaviour:
   _gravityModule:
     enabled: 0
   _vortexModule:
-    enabled: 1
+    enabled: 0
   _velocityModule:
     enabled: 0
   _velocitySpace: 0
@@ -1406,7 +1406,7 @@ MonoBehaviour:
   moduleEmitterFoldout: 1
   moduleParticleFoldout: 1
   moduleMovementFoldout: 1
-  moduleEventsFoldout: 0
-  moduleAdvancedFoldout: 0
+  moduleEventsFoldout: 1
+  moduleAdvancedFoldout: 1
   m_Sprite: {fileID: 21300000, guid: 71dac4c4afcf74f3c92a49afcf7036dc, type: 3}
   m_Texture: {fileID: 0}
