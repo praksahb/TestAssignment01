@@ -18,22 +18,23 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     [SerializeField] private List<Character> _passengers = new List<Character>();
     public List<Character> Passengers => _passengers;
 
-    [SerializeField] private Transform[] _seatPositions; 
+    [SerializeField] private Transform[] _seatPositions;
     public Transform[] SeatPositions => _seatPositions;
-    
+
     [Header("Visuals")]
-    [SerializeField] private Renderer _busRenderer; 
+    [SerializeField] private Renderer _busRenderer;
     public Renderer BusRenderer => _busRenderer;
-    
+
     [Header("Path Settings")]
     [SerializeField] private SimpleSpline _currentPath;
     public SimpleSpline CurrentPath { get => _currentPath; set => _currentPath = value; }
 
-    [SerializeField] private Transform _exitPoint; 
+    [SerializeField] private Transform _exitPoint;
     public Transform ExitPoint { get => _exitPoint; set => _exitPoint = value; }
 
-    [SerializeField] private float _collisionCheckDistance = 1.25f;
     [SerializeField] private float _nodeDetectionRadius = .75f;
+
+    [SerializeField] private BoxCollider _collider;
 
     // State Fields 
     private bool _isMoving = false;
@@ -41,30 +42,32 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     private float _currentT = 0f;
     private bool _isExiting = false;
     private bool _isLoadingPassengers = false;
-    private bool _isTransformMoving = false; 
-    private Vector3 _lastNodeCheckPos; 
-    private Collider[] _hitBuffer = new Collider[20]; 
+    private bool _isTransformMoving = false;
+    private Vector3 _lastNodeCheckPos;
+    private Collider[] _hitBuffer = new Collider[20];
 
-    public float CurrentT => _currentT; 
+    public float CurrentT => _currentT;
 
     public System.Action<Bus> OnBusDeparted;
-    public System.Action<Bus> OnLeaveQueue; 
-    
+    public System.Action<Bus> OnLeaveQueue;
+
     private int _queueIndex = -1;
-    private BusSpawner _busSpawner; 
+    private BusSpawner _busSpawner;
 
     [SerializeField] private bool _isInQueue = false;
 
     // Priority Properties
     public bool IsOnPath => _isMoving; // Higher priority (Main loop)
-    public bool IsInQueue => _isInQueue; 
-    public bool IsDeparting => _tapToStart; 
-    public bool IsMoving => _isMoving || _isTransformMoving; 
+    public bool IsInQueue => _isInQueue;
+    public bool IsDeparting => _tapToStart;
+    public bool IsMoving => _isMoving || _isTransformMoving;
     public bool IsLoadingPassengers => _isLoadingPassengers;
 
     private void Awake()
     {
         _capacity = Mathf.Max(1, _capacity);
+        _collider = GetComponent<BoxCollider>();
+        if (_collider == null) _collider = gameObject.AddComponent<BoxCollider>();
     }
 
     private void OnValidate()
@@ -78,7 +81,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private void TryLaunchBus()
     {
-        if (_tapToStart) return; 
+        if (_tapToStart) return;
 
         if (_isInQueue && _queueIndex <= 1)
         {
@@ -88,7 +91,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 return;
             }
             if (HapticManager.Instance != null) HapticManager.Instance.TriggerVibrate();
-            
+
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.BusTapPositive);
 
             Debug.Log("Bus Tap Received. Queuing start...");
@@ -120,7 +123,9 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         _activeMoveCoroutine = null;
     }
 
-    public void InitializeAsQueued(SimpleSpline path, Transform exit, CharacterColor busColor, Transform spawnSpot, int index, BusSpawner spawner)
+    private ColorMappingSO _colorMapping;
+
+    public void InitializeAsQueued(SimpleSpline path, Transform exit, CharacterColor busColor, Transform spawnSpot, int index, BusSpawner spawner, ColorMappingSO mapping)
     {
         _currentPath = path;
         _exitPoint = exit;
@@ -128,18 +133,22 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         _queueIndex = index;
         _isInQueue = true;
         _busSpawner = spawner;
-        
+        _colorMapping = mapping;
+
         if (_busRenderer == null) _busRenderer = GetComponentInChildren<Renderer>();
-        if (_busRenderer != null) _busRenderer.material.color = GetColorValue(busColor);
-        
-        Vector3 startOffset = new Vector3(0, 0, 10f); 
+        if (_busRenderer != null && _colorMapping != null)
+        {
+            _busRenderer.material.color = _colorMapping.GetColor(busColor);
+        }
+
+        Vector3 startOffset = new Vector3(0, 0, 10f);
         transform.position = spawnSpot.position + startOffset;
-        transform.rotation = Quaternion.Euler(0, 180, 0); 
-        
+        transform.rotation = Quaternion.Euler(0, 180, 0);
+
         StartMoveAction(MoveToPosition(spawnSpot.position, _spawnEntryDuration, false));
         StartCoroutine(LifeCycleRoutine());
     }
-    
+
     public void UpdateQueuePosition(Transform newSpot, int newIndex)
     {
         _queueIndex = newIndex;
@@ -150,47 +159,35 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     [SerializeField] private float _spawnEntryDuration = 1.5f;
     [SerializeField] private float _queueShiftDuration = 0.5f;
 
-    private UnityEngine.Color GetColorValue(CharacterColor type)
-    {
-        switch (type)
-        {
-            case CharacterColor.Red: return UnityEngine.Color.red;
-            case CharacterColor.Blue: return UnityEngine.Color.blue;
-            case CharacterColor.Yellow: return UnityEngine.Color.yellow;
-            case CharacterColor.Green: return UnityEngine.Color.green;
-            default: return UnityEngine.Color.white;
-        }
-    }
-
     // Removed wrapped routines QueueEntryRoutine and MoveToQueueSpot as they are now handled directly via StartMoveAction
-    
+
     private IEnumerator MoveToPosition(Vector3 target, float duration, bool lookAtTarget = true, bool checkCollisions = false)
     {
         _isTransformMoving = true;
         Vector3 start = transform.position;
         Quaternion startRot = transform.rotation;
-        
+
         Quaternion targetRot = startRot;
         if (lookAtTarget)
         {
-             Vector3 dir = (target - start).normalized;
-             if(dir != Vector3.zero) targetRot = Quaternion.LookRotation(dir);
+            Vector3 dir = (target - start).normalized;
+            if (dir != Vector3.zero) targetRot = Quaternion.LookRotation(dir);
         }
-        
+
         float elapsed = 0f;
         while (elapsed < duration)
         {
             if (checkCollisions && IsPathBlocked())
             {
                 yield return null;
-                continue; 
+                continue;
             }
 
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
             transform.position = Vector3.Lerp(start, target, t);
             if (lookAtTarget) transform.rotation = Quaternion.Slerp(startRot, targetRot, t * 5f);
-            
+
             yield return null;
         }
         transform.position = target;
@@ -204,13 +201,13 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         while (!_tapToStart) yield return null;
 
         while (IsPathBlocked()) yield return new WaitForSeconds(0.2f);
-        
+
         if (_currentPath == null)
         {
             Debug.LogError("Bus: Path NULL!");
             yield break;
         }
-        
+
         // ACQUIRE LOCK (Entry Merge)
         if (_busSpawner != null)
         {
@@ -220,16 +217,16 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
         // Calculate natural entry point
         float entryT = _currentPath.GetClosestT(transform.position);
         _currentT = entryT; // Sync internal time
-        
+
         _isInQueue = false; // Status Update: No longer "Parked", now "Entering"
-        
+
         yield return StartMoveAction(MoveToPosition(_currentPath.GetPointOnPath(entryT), 0.5f, true, true));
 
         // RELEASE LOCK
         if (_busSpawner != null) _busSpawner.UnlockEntry();
 
-        OnLeaveQueue?.Invoke(this); 
-        
+        OnLeaveQueue?.Invoke(this);
+
         // Loop
         _isMoving = true;
         while (_isMoving)
@@ -237,45 +234,45 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             LoopOnPath();
             yield return null;
         }
-        
+
         if (_isExiting) yield return StartCoroutine(DriveToExitRoutine());
 
         OnBusDeparted?.Invoke(this);
         Destroy(gameObject);
     }
-    
+
     private void LoopOnPath()
     {
         if (_isLoadingPassengers) return;
-        
+
         if (IsPathBlocked()) return; // Brake
 
         // Move T
-        float pathLengthApprox = 50f; 
+        float pathLengthApprox = 50f;
         float tIncrement = (_speed * Time.deltaTime) / pathLengthApprox;
-        
+
         _currentT += tIncrement;
-        if (_currentT > 1.0f) _currentT = 0f; 
-        
+        if (_currentT > 1.0f) _currentT = 0f;
+
         Vector3 pos = _currentPath.GetPointOnPath(_currentT);
         Vector3 nextPos = _currentPath.GetPointOnPath(_currentT + 0.01f);
         Vector3 dir = (nextPos - pos).normalized;
         if (dir != Vector3.zero) transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
-        
+
         transform.position = pos;
-        
+
         if (Vector3.SqrMagnitude(transform.position - _lastNodeCheckPos) > 0.01f) // 0.1 * 0.1
         {
             CheckForStopNode();
             _lastNodeCheckPos = transform.position;
         }
-        
-        if (_passengers.Count >= _capacity && _currentT > 0.8f) 
+
+        if (_passengers.Count >= _capacity && _currentT > 0.8f)
         {
             Debug.Log($"[Bus] Exiting Path. Capacity Reached ({_passengers.Count}/{_capacity}). Path T: {_currentT:F2}");
             // Audio moved to LoadPassengersRoutine
             _isMoving = false;
-            _isExiting = true; 
+            _isExiting = true;
         }
     }
 
@@ -296,10 +293,10 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                     if (node.StopPoint != null)
                     {
                         float dist = Vector3.Distance(transform.position, node.StopPoint.position);
-                        if (dist > 0.5f) continue; 
+                        if (dist > 0.5f) continue;
                     }
                     StartCoroutine(StopAndLoadRoutine(node));
-                    break; 
+                    break;
                 }
             }
         }
@@ -307,8 +304,8 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private IEnumerator StopAndLoadRoutine(Node node)
     {
-        _isLoadingPassengers = true; 
-        if (node.StopPoint != null) yield return StartMoveAction(MoveToPosition(node.StopPoint.position, 0.5f)); 
+        _isLoadingPassengers = true;
+        if (node.StopPoint != null) yield return StartMoveAction(MoveToPosition(node.StopPoint.position, 0.5f));
         yield return StartCoroutine(LoadPassengersRoutine(node));
         if (_currentPath != null) _currentT = _currentPath.GetClosestT(transform.position);
         _isLoadingPassengers = false;
@@ -323,14 +320,14 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             {
                 _passengers.Add(c);
                 int seatIdx = _passengers.Count - 1;
-                Transform seat = transform; 
+                Transform seat = transform;
                 if (seatIdx < _seatPositions.Length && _seatPositions[seatIdx] != null) seat = _seatPositions[seatIdx];
 
                 if (HapticManager.Instance != null) HapticManager.Instance.TriggerVibrate();
                 if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.PassengerBoarding);
 
                 c.MoveToBus(seat, this);
-                
+
                 if (_passengers.Count >= _capacity)
                 {
                     if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SoundType.BusFull);
@@ -340,23 +337,25 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 // ...
                 while (c != null && Vector3.Distance(c.transform.position, seat.position) > 0.2f && timeout > 0f)
                 {
-                     timeout -= Time.deltaTime;
-                     yield return null;
+                    timeout -= Time.deltaTime;
+                    yield return null;
                 }
             }
         }
-        yield return new WaitForSeconds(0.5f); 
+        yield return new WaitForSeconds(0.5f);
     }
-    
+
     private bool IsPathBlocked()
     {
-        float boxLen = _collisionCheckDistance;
-        float boxWidth = 1.5f; 
-        Vector3 center = transform.position + (transform.forward * (boxLen * 0.5f)) + (Vector3.up * 0.5f);
-        Vector3 halfExtents = new Vector3(boxWidth * 0.5f, 1.0f, boxLen * 0.5f);
-        
+        // Use cached collider size or fallback
+        Vector3 size = (_collider != null) ? _collider.size : new Vector3(1.5f, 2f, 1.25f);
+        Vector3 centerOffset = (_collider != null) ? _collider.center : new Vector3(0, 1f, 0.625f);
+
+        Vector3 center = transform.TransformPoint(centerOffset);
+        Vector3 halfExtents = size * 0.5f;
+
         Collider[] hits = Physics.OverlapBox(center, halfExtents, transform.rotation, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
-        
+
         foreach (var hit in hits)
         {
             Bus otherBus = hit.GetComponentInParent<Bus>();
@@ -384,9 +383,9 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
                 // PRIORITY LOGIC:
                 // If I am ON THE PATH (_isMoving), I have right of way over buses that are DEPARTING/ENTERING.
                 // FIX: Check 'IsMoving' (Property) which includes merging state. If they are merging, they are an obstacle.
-                if (this._isMoving && !otherBus.IsMoving && otherBus.IsDeparting) continue; 
+                if (this._isMoving && !otherBus.IsMoving && otherBus.IsDeparting) continue;
 
-                 if (!otherBus.IsInQueue) return true;
+                if (!otherBus.IsInQueue) return true;
             }
         }
         return false;
@@ -394,17 +393,16 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.yellow;
-        float boxLen = _collisionCheckDistance;
-        float boxWidth = 1.5f;
-        Vector3 center = transform.position + (transform.forward * (boxLen * 0.5f)) + (Vector3.up * 0.5f);
-        Vector3 size = new Vector3(boxWidth, 2.0f, boxLen);
-        
-        Matrix4x4 old = Gizmos.matrix;
-        Gizmos.matrix = Matrix4x4.TRS(center, transform.rotation, Vector3.one);
-        Gizmos.DrawWireCube(Vector3.zero, size);
-        Gizmos.matrix = old;
-        
+        BoxCollider bc = GetComponent<BoxCollider>();
+        if (bc != null)
+        {
+            Gizmos.color = Color.yellow;
+            Matrix4x4 old = Gizmos.matrix;
+            Gizmos.matrix = transform.localToWorldMatrix;
+            Gizmos.DrawWireCube(bc.center, bc.size);
+            Gizmos.matrix = old;
+        }
+
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, _nodeDetectionRadius);
     }
@@ -417,7 +415,7 @@ public class Bus : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
             {
                 transform.position = Vector3.MoveTowards(transform.position, _exitPoint.position, _speed * Time.deltaTime);
                 Vector3 dir = (_exitPoint.position - transform.position).normalized;
-                if(dir != Vector3.zero) transform.rotation = Quaternion.LookRotation(dir);
+                if (dir != Vector3.zero) transform.rotation = Quaternion.LookRotation(dir);
                 yield return null;
             }
         }

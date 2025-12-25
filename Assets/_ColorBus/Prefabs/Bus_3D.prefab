@@ -914,8 +914,8 @@ MonoBehaviour:
   _busRenderer: {fileID: 6954067467611009003}
   _currentPath: {fileID: 0}
   _exitPoint: {fileID: 0}
-  _collisionCheckDistance: 0.75
   _nodeDetectionRadius: 0.75
+  _collider: {fileID: 7921705650863809368}
   _isInQueue: 0
   _spawnEntryDuration: 2
   _queueShiftDuration: 0.5
@@ -938,5 +938,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.6395906, y: 0.36665612, z: 0.79003775}
-  m_Center: {x: 0.001993522, y: 0.17981508, z: -0.036970317}
+  m_Size: {x: 0.85, y: 0.36665612, z: 1}
+  m_Center: {x: 0.001993537, y: 0.17981508, z: -0.00039611757}

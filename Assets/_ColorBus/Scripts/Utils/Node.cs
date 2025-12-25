@@ -135,6 +135,28 @@ public class Node : MonoBehaviour
         }
     }
     
+    private ColorMappingSO _colorMapping;
+
+    public void Initialize(ColorMappingSO mapping)
+    {
+        _colorMapping = mapping;
+        
+        // Propagate to existing characters
+        foreach (var batch in _batches)
+        {
+            if (batch.CharList != null)
+            {
+                foreach (var character in batch.CharList)
+                {
+                    if (character != null)
+                    {
+                        character.SetColor(character.CharacterColor, _colorMapping);
+                    }
+                }
+            }
+        }
+    }
+    
     // --- BATCH INTERFACE ---
 
     public bool HasCharacter(CharacterColor color)
@@ -218,16 +240,7 @@ public class Node : MonoBehaviour
             // Calculate size of this batch
             int count = batch.CharList.Count; 
             if(count == 0) count = 1; // avoid infinite collapse?
-            // Note: CharList might diminish as they enter bus? 
-            // Ideally we track "Initial Count" or "Rows Occupied".
-            // Since we destroy the BatchObj when empty, it's fine.
-            // But wait, if chars leave, count drops. Do we want the batch to shrink visually? 
-            // Usually no, the "container" size stays.
-            // For now, let's assume size stays fixed until batch is gone?
-            // Actually, we can just grab the existing localPosition of slots to guess size? Hard.
             
-            // BETTER: Since we removed _rows field, we must rely on CharList count to estimate size OR store it in Batch.
-            // Let's assume we stack them based on current count.
             int rowsNeeded = Mathf.CeilToInt((float)count / _cols);
             
             Vector3 targetPos;
@@ -360,10 +373,6 @@ public class Node : MonoBehaviour
         
         // Return next offset
         float usedSpace = (rowsNeeded * ((_queueDirection == QueueDirection.Vertical) ? _spacingZ : _spacingX));
-        // Add Batch Spacing
-        // Note: For horizontal using SpacingX is safer contextually, but SpacingX is declared as 'width' between cols usually?
-        // Wait, _spacingX is typically lateral spacing. But in Horizontal mode, Rows EXTEND along X. So we use spacingX for row separation?
-        // Let's re-read line 304 in previous code: `float xPos = (r * _spacingX);` -> Yes, X spacing handles row depth in horizontal.
         
         return startOffset + usedSpace + _batchSpacing;
     }
@@ -394,7 +403,12 @@ public class Node : MonoBehaviour
         if (c == null) c = charObj.AddComponent<Character>();
         
         // Remove direct Renderer access, Character handles it in SetColor
-        c.SetColor(cType); 
+        // If _colorMapping is not yet set (e.g. at editor time gen), we pass null?
+        // Or we just set the color enum and let the Char sort it out on Start using a global SO reference? 
+        // No, we want to inject.
+        // If this is running in Editor (ContextMenu), _colorMapping might be null.
+        
+        c.SetColor(cType, _colorMapping); 
         
         return c;
     }

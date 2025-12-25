@@ -34,17 +34,19 @@ public class Character : MonoBehaviour
 
     private void OnEnable()
     {
-        SetColor(_characterColor);
+        // OnEnable is tricky if we rely on injection. 
+        // We probably shouldn't set color here unless we have the mapping.
+        // Or we rely on "SetColor" being called by the spawner/node.
     }
 
     private void OnValidate()
     {
-        SetColor(_characterColor);
+        // Cannot validate color mapping without reference
     }
 
     private MaterialPropertyBlock _propBlock;
 
-    public void SetColor(CharacterColor c)
+    public void SetColor(CharacterColor c, ColorMappingSO mapping = null)
     {
         _characterColor = c;
         // visual update
@@ -54,21 +56,24 @@ public class Character : MonoBehaviour
             if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
             
             _myRenderer.GetPropertyBlock(_propBlock);
-            _propBlock.SetColor("_BaseColor", GetColorFromEnum(c)); // Assuming standard shader uses _Color
-            _myRenderer.SetPropertyBlock(_propBlock);
+            
+            Color targetColor = Color.white;
+            if (mapping != null)
+            {
+                targetColor = mapping.GetColor(c);
+            }
+            else
+            {
+               // Fallback or maintain existing if just changing enum?
+               // If mapping is null, we can't do much unless we have a static default.
+            }
+            
+            if(mapping != null) 
+            {
+                 _propBlock.SetColor("_BaseColor", targetColor);
+                 _myRenderer.SetPropertyBlock(_propBlock);
+            }
         }
-    }
-    
-    private Color GetColorFromEnum(CharacterColor c)
-    {
-        switch (c)
-        {
-            case CharacterColor.Red: return Color.red;
-            case CharacterColor.Green: return Color.green;
-            case CharacterColor.Blue: return Color.blue;
-            case CharacterColor.Yellow: return Color.yellow;
-        }
-        return Color.white;
     }
 
     public void MoveToBus(Transform targetSeat, Bus bus)

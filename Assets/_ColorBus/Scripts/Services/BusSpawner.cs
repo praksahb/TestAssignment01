@@ -62,10 +62,22 @@ public class BusSpawner : MonoBehaviour
         _entryLocked = false;
     }
 
+    [Header("Color Mappings")]
+    [SerializeField] private ColorMappingSO _colorMapping;
+
     private void Awake()
     {
         if (_waitingSpots != null)
             _waitingLocationOccupants = new Bus[_waitingSpots.Length];
+            
+        // Inject dependencies
+        if (_colorMapping != null)
+        {
+            foreach (var node in _levelNodes)
+            {
+                if (node != null) node.Initialize(_colorMapping);
+            }
+        }
     }
 
     private void OnEnable()
@@ -229,7 +241,7 @@ public class BusSpawner : MonoBehaviour
 
         _waitingLocationOccupants[index] = bus;
 
-        bus.InitializeAsQueued(_levelPath, _exitPoint, color, spawnSpot, index, this);
+        bus.InitializeAsQueued(_levelPath, _exitPoint, color, spawnSpot, index, this, _colorMapping);
         bus.OnLeaveQueue += HandleBusLeavingQueue;
         bus.OnBusDeparted += HandleBusFullDeparture;
     }
