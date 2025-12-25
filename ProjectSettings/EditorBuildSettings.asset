@@ -8,9 +8,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
-    path: Assets/_ColorBus/Scenes/Level_4_3D.unity
+  - enabled: 0
+    path: Assets/_ColorBus/Scenes/Level_4_3D_Mem_Safe.unity
     guid: 531b235f0346d6d4584aa5859cef7c98
+  - enabled: 1
+    path: Assets/_ColorBus/Scenes/Level_4_3D_WorkingScene_WithMemLeak From ParticleFX.unity
+    guid: 1e393221b2795cb49927a68647e5ae62
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
