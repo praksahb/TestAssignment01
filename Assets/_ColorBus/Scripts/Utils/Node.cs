@@ -22,10 +22,7 @@ public class Node : MonoBehaviour
         if (!col.isTrigger) col.isTrigger = true;
     }
 
-    private void Start()
-    {
-       // If using 3D primitives (like Capsules), they might already have a renderer we can reuse or check
-    }
+
 
 
     [Header("Node Configuration")]
@@ -201,6 +198,9 @@ public class Node : MonoBehaviour
             var frontBatch = _batches[0];
             frontBatch.RemoveCharacter(character);
             
+            // Trigger update immediately so others slide forward
+            UpdateCharacterPositions();
+
             // Check if batch is done
             if (frontBatch.IsEmpty)
             {
@@ -209,6 +209,96 @@ public class Node : MonoBehaviour
         }
     }
     
+    // --- ANCHOR & QUEUE SYSTEM ---
+
+    // --- ANCHOR & QUEUE SYSTEM ---
+
+    // Note: We no longer pre-calculate a global list because spacing depends on dynamic batch sizes.
+
+    private void Start()
+    {
+        // Initial Snap
+        UpdateCharacterPositions(true);
+    }
+
+    public void UpdateCharacterPositions(bool snap = false)
+    {
+        // Start from origin
+        float currentOffset = 0f;
+        int globalMoverIndex = 0;
+
+        foreach (var batch in _batches)
+        {
+            if (batch.CharList == null) continue;
+
+            // 1. Position Characters within this batch
+            int charIndex = 0;
+            foreach (var chara in batch.CharList)
+            {
+                if (chara == null) continue;
+
+                // Calculate local slot position based on compressed index
+                int r = charIndex / _cols; // Row
+                int c = charIndex % _cols; // Col
+
+                Vector3 localSlotPos = Vector3.zero;
+
+                if (_queueDirection == QueueDirection.Vertical)
+                {
+                    // Vertical Queue: Fills +Z
+                    // OffsetZ = currentBatchStart + (row * spacing)
+                    float xPos = (c - (_cols - 1) * 0.5f) * _spacingX;
+                    float zPos = currentOffset + (r * _spacingZ);
+                    localSlotPos = new Vector3(xPos, 0, zPos);
+                }
+                else
+                {
+                    // Horizontal Queue: Fills -X
+                    float xPos = -(currentOffset + (r * _spacingX));
+                    float zPos = (c - (_cols - 1) * 0.5f) * _spacingZ;
+                    localSlotPos = new Vector3(xPos, 0, zPos);
+                }
+
+                Vector3 targetWorldPos = transform.TransformPoint(localSlotPos);
+                
+                // Stagger logic: 0.05s per character index
+                float delay = snap ? 0f : (globalMoverIndex * 0.05f);
+
+                if (snap)
+                {
+                    chara.transform.position = targetWorldPos;
+                    chara.transform.rotation = Quaternion.identity;
+                    chara.MoveToTarget(targetWorldPos, 0f); // No delay on snap
+                }
+                else
+                {
+                    chara.MoveToTarget(targetWorldPos, delay);
+                }
+
+                charIndex++;
+                globalMoverIndex++;
+            }
+
+            // 2. Calculate Gap for NEXT batch
+            // Size of this batch is determined by how many rows it CURRENTLY uses
+            int count = batch.CharList.Count; 
+            if (count == 0) 
+            {
+                // If empty, it adds 0 size, just the spacing? 
+                // Usually empty batches are removed, but if one lingers:
+                // It should take 0 space.
+            }
+            else
+            {
+                int rowsUsed = Mathf.CeilToInt((float)count / _cols);
+                float batchLength = rowsUsed * ((_queueDirection == QueueDirection.Vertical) ? _spacingZ : _spacingX);
+                currentOffset += batchLength + _batchSpacing;
+            }
+        }
+    }
+
+
+
     private void RemoveFrontBatch()
     {
         if (_batches.Count == 0) return;
@@ -216,65 +306,21 @@ public class Node : MonoBehaviour
         CharacterBatch oldBatch = _batches[0];
         _batches.RemoveAt(0);
         
-        // Cleanup visuals for old batch root?
+        // Cleanup visuals for old batch root? 
+        // With new system, characters might still be visually "in" the batch object hierarchy 
+        // but we are controlling their world position.
+        // If we destroy the Root, we destroy the characters!
+        // So we should NOT destroy the root if characters are still alive?
+        // Actually, RemoveFrontBatch is only called when batch.IsEmpty is true.
+        // So it is safe to destroy the root.
+        
         if (oldBatch.BatchRoot != null)
         {
             Destroy(oldBatch.BatchRoot.gameObject);
         }
         
-        // Move remaining batches forward
-        UpdateBatchPositions();
-    }
-    
-    // Simplified UpdateBatchPositions - We need to recalculate? 
-    // Actually, UpdateBatchPositions was based on index * fixed size.
-    // If we want runtime updates (removing batches), we need to shift them back.
-    // This is tricky if sizes vary. We need to know the size of EACH batch to know where it sits.
-    private void UpdateBatchPositions()
-    {
-        float currentOffset = 0f;
-        for (int i = 0; i < _batches.Count; i++)
-        {
-            CharacterBatch batch = _batches[i];
-            
-            // Calculate size of this batch
-            int count = batch.CharList.Count; 
-            if(count == 0) count = 1; // avoid infinite collapse?
-            
-            int rowsNeeded = Mathf.CeilToInt((float)count / _cols);
-            
-            Vector3 targetPos;
-             if (_queueDirection == QueueDirection.Vertical) 
-                targetPos = new Vector3(0, 0, currentOffset);
-            else 
-                targetPos = new Vector3(-currentOffset, 0, 0);
-
-            if (batch.BatchRoot != null)
-            {
-                // batch.BatchRoot.localPosition = targetPos; // Old Snap
-                StartCoroutine(MoveBatchTo(batch.BatchRoot, targetPos)); // New Smooth Slide
-            }
-            
-            float usedSpace = rowsNeeded * ((_queueDirection == QueueDirection.Vertical) ? _spacingZ : _spacingX);
-            currentOffset += usedSpace + _batchSpacing;
-        }
-    }
-    
-    private IEnumerator MoveBatchTo(Transform batchRoot, Vector3 localTarget)
-    {
-        float duration = 0.3f;
-        float elapsed = 0f;
-        Vector3 startPos = batchRoot.localPosition;
-        
-        while (elapsed < duration)
-        {
-            if (batchRoot == null) yield break;
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            batchRoot.localPosition = Vector3.Lerp(startPos, localTarget, t);
-            yield return null;
-        }
-        if(batchRoot != null) batchRoot.localPosition = localTarget;
+        // Trigger update for everyone else
+        UpdateCharacterPositions();
     }
     
     // --- GENERATION TOOLS ---
@@ -311,6 +357,10 @@ public class Node : MonoBehaviour
             currentOffset = CreateBatchDynamic(1, new BatchSetup { color = CharacterColor.Green, count = 4 }, currentOffset);
             currentOffset = CreateBatchDynamic(2, new BatchSetup { color = CharacterColor.Blue, count = 5 }, currentOffset);
         }
+        
+        // Final Snap to Anchors
+        // Anchor positions are now calculated inside UpdateCharacterPositions dynamically
+        UpdateCharacterPositions(true);
     }
     
     private float CreateBatchDynamic(int index, BatchSetup setup, float startOffset)

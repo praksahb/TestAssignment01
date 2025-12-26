@@ -15,17 +15,16 @@ MonoBehaviour:
   _soundList:
   - type: 1
     clips:
-    - {fileID: 8300000, guid: 49293993a13ad5d4882409e64c256b0f, type: 3}
+    - {fileID: 8300000, guid: 2d51c4fe7bdbce04ebc4f9aca328aa19, type: 3}
   - type: 2
     clips:
     - {fileID: 8300000, guid: d52ee45ef569540408d7c72f0ed76eb9, type: 3}
   - type: 3
     clips:
-    - {fileID: 8300000, guid: 5a2d971b8403f1549a4baad0aaebb8f3, type: 3}
+    - {fileID: 8300000, guid: 1af3ee37cf82fa64abe5cc2d1dddf9e1, type: 3}
   - type: 4
     clips:
-    - {fileID: 8300000, guid: de407644bdf2e634e92471ed4bd47304, type: 3}
-    - {fileID: 8300000, guid: 02824dda78dcc2f40ad92db2663a960b, type: 3}
+    - {fileID: 8300000, guid: 72cb3c567b28ae24db8f823da15cb214, type: 3}
   - type: 5
     clips:
-    - {fileID: 8300000, guid: 4a4ce9f93f56f7640bcec644abdd6a2f, type: 3}
+    - {fileID: 8300000, guid: cfd536c1160f46d4fb0c43835797f4ea, type: 3}

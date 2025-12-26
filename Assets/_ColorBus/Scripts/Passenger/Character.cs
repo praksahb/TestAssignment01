@@ -76,8 +76,42 @@ public class Character : MonoBehaviour
         }
     }
 
+    // --- Queue Movement ---
+    private Vector3? _targetPosition;
+    private bool _isMovingInQueue = false;
+    private float _moveDelayTimer = 0f;
+
+    public void MoveToTarget(Vector3 worldPos, float delay = 0f)
+    {
+        _targetPosition = worldPos;
+        _moveDelayTimer = delay;
+        _isMovingInQueue = true;
+    }
+
+    private void Update()
+    {
+        if (_isMovingInQueue && _targetPosition.HasValue)
+        {
+            if (_moveDelayTimer > 0)
+            {
+                _moveDelayTimer -= Time.deltaTime;
+                return;
+            }
+
+            float step = _speed * Time.deltaTime;
+            transform.position = Vector3.MoveTowards(transform.position, _targetPosition.Value, step);
+
+            if (Vector3.Distance(transform.position, _targetPosition.Value) < 0.01f)
+            {
+                transform.position = _targetPosition.Value;
+                _isMovingInQueue = false;
+            }
+        }
+    }
+
     public void MoveToBus(Transform targetSeat, Bus bus)
     {
+        _isMovingInQueue = false; // Stop queue movement
         StartCoroutine(MoveToBusRoutine(targetSeat, bus));
     }
     
